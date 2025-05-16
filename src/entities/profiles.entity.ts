@@ -1,31 +1,33 @@
 import 'reflect-metadata'
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
-
 import { BaseEntity } from '~/entities/base.entity'
 
-@Entity({
-  name: 'messages'
-})
-export class Messages extends BaseEntity {
+@Entity({ name: 'profiles' })
+export class Profiles extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number
 
   @Column({
     type: 'varchar'
   })
-  senderId!: string
+  fullName!: string
 
   @Column({
     type: 'varchar'
   })
-  receiverId!: string
+  phoneNumber!: string
 
   @Column({
     type: 'text'
   })
-  content!: string
+  avatarUrl!: string
 
-  constructor(data?: Partial<Messages>) {
+  @Column({
+    type: 'text'
+  })
+  coverUrl!: string
+
+  constructor(data?: Partial<Profiles>) {
     super()
     Object.assign(this, data)
   }

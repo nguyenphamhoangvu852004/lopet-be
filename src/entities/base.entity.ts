@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { CreateDateColumn, DeleteDateColumn, UpdateDateColumn } from 'typeorm'
 
 export class BaseEntity {

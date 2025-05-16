@@ -6,7 +6,6 @@ import { Server } from 'socket.io'
 import { appDataSource } from '~/config/appDataSource'
 import { router } from '~/routes/index'
 import { logger } from '~/config/logger'
-
 const PORT = environment.APP_PORT
 const HOSTNAME = environment.APP_HOSTNAME
 
@@ -22,6 +21,7 @@ export async function startServer() {
   const app: core.Express = express()
   const route: core.Router = express.Router()
   const server = createServer(app)
+  app.use(express.json())
   const io = new Server(server, {
     cors: {
       origin: '*',

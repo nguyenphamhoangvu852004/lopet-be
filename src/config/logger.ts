@@ -18,11 +18,9 @@ export const logger = winston.createLogger({
     winston.format.timestamp({
       format: 'YYYY-MM-DD hh:mm:ss.SSS A'
     }),
-    winston.format.printf(
-      ({ timestamp, level, message, stack, ...logMetadata }) => {
-        return ` ${timestamp} ${level}: ${message} ${stack ? stack : ''} ${JSON.stringify(logMetadata)}`
-      }
-    )
+    winston.format.printf(({ timestamp, level, message, stack, ...logMetadata }) => {
+      return ` ${timestamp} ${level}: ${message} ${stack ? stack : ''} ${JSON.stringify(logMetadata)}`
+    })
   )
   //   transports: [new winston.transports.Console()]
 })

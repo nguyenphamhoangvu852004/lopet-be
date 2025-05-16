@@ -1,5 +1,5 @@
 import { log } from 'console'
-import CreateMessageDTO from '~/modules/message/dto/createMessageDTO'
+import CreateMessageDTO from '~/modules/message/dto/CreateMessageDTO'
 import IMessageService from '~/modules/message/services/IMessageService'
 
 export default class MessageServiceImpl implements IMessageService {
