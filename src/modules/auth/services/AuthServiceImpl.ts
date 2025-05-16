@@ -1,7 +1,6 @@
 import { log } from 'console'
 import { Accounts } from '~/entities/accounts.entity'
 import { BadRequest, Conflict, NotFound } from '~/error/error.custom'
-import { CreateAccountDTO } from '~/modules/account/dto/Create'
 import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { LoginInputDTO, LoginOutputDTO } from '~/modules/auth/dto/Login'

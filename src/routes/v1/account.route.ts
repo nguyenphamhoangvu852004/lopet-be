@@ -9,4 +9,4 @@ const repo = new AccountRepoImpl()
 const service = new AccountServiceImpl(repo)
 const controller = new AccountController(service)
 
-accountRouter.get('/:id',controller.getById.bind(controller))
+accountRouter.get('/:id', controller.getById.bind(controller))

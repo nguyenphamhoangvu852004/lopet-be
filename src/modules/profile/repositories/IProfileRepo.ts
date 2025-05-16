@@ -1,7 +1,9 @@
 import { Profiles } from '~/entities/profiles.entity'
-import { CreateProfileDTO } from '~/modules/profile/dto/Create'
 
 export default interface IProfileRepo {
   findById(id: number): Promise<Profiles | null>
-  create(data: CreateProfileDTO): Promise<Profiles>
+  findByAccountId(id: number): Promise<Profiles | null>
+  create(data: Profiles): Promise<Profiles | null>
+  update(id: number, data: Profiles): Promise<Profiles | null>
+  setToAccount(acountId: number, profileId: Profiles): Promise<Profiles | null>
 }

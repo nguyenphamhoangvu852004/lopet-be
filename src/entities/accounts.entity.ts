@@ -20,8 +20,8 @@ export class Accounts extends BaseEntity {
   })
   password!: string
 
+  @OneToOne(() => Profiles, (profile) => profile.account, { cascade: true, nullable: true })
   @JoinColumn({ name: 'profileId' })
-  @OneToOne(() => Profiles)
   profile!: Profiles
 
   constructor(data?: Partial<Accounts>) {

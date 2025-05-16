@@ -1,9 +1,13 @@
 import { Accounts } from '~/entities/accounts.entity'
-import { NotFound } from '~/error/error.custom'
+import { Profiles } from '~/entities/profiles.entity'
+import { BadRequest, NotFound } from '~/error/error.custom'
 import { CreateAccountDTO } from '~/modules/account/dto/Create'
 import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { IAccountService } from '~/modules/account/services/IAccountService'
+import { CreateProfileOutputDTO } from '~/modules/profile/dto/Create'
+import { GetProfileOutputDTO } from '~/modules/profile/dto/Get'
+import { handleThrowError } from '~/utils/handle.util'
 
 export class AccountServiceImpl implements IAccountService {
   constructor(private repo: IAccountRepo) {
@@ -12,7 +16,35 @@ export class AccountServiceImpl implements IAccountService {
   async getById(data: number): Promise<GetAccountOutputDTO> {
     try {
       const account = await this.repo.findById(data)
-      if (!account) throw new Error('Not found')
+      if (!account) throw new NotFound()
+      const dto = new GetAccountOutputDTO({
+        id: account.id,
+        email: account.email,
+        username: account.username,
+        password: account.password
+      })
+      if (!account.profile) {
+        return dto
+      }
+      const profileDto = new GetProfileOutputDTO({
+        id: account.profile.id,
+        fullName: account.profile.fullName,
+        bio: account.profile.bio,
+        phoneNumber: account.profile.phoneNumber,
+        avatarUrl: account.profile.avatarUrl,
+        coverUrl: account.profile.coverUrl
+      })
+      dto.profile = profileDto
+      return dto
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
+  async getByEmail(data: string): Promise<GetAccountOutputDTO> {
+    try {
+      const account = await this.repo.findByEmail(data)
+      if (!account) throw new NotFound()
       const dto = new GetAccountOutputDTO({
         id: account.id,
         email: account.email,
@@ -22,21 +54,8 @@ export class AccountServiceImpl implements IAccountService {
       })
       return dto
     } catch (error) {
-      throw new Error((error as Error).message)
+      handleThrowError(error)
     }
-  }
-
-  async getByEmail(data: string): Promise<GetAccountOutputDTO> {
-    const account = await this.repo.findByEmail(data)
-    if (!account) throw new NotFound()
-    const dto = new GetAccountOutputDTO({
-      id: account.id,
-      email: account.email,
-      username: account.username,
-      password: account.password,
-      profile: account.profile
-    })
-    return dto
   }
 
   async getByUsername(data: string): Promise<GetAccountOutputDTO> {
@@ -52,7 +71,7 @@ export class AccountServiceImpl implements IAccountService {
       })
       return dto
     } catch (error) {
-      throw new Error((error as Error).message)
+      handleThrowError(error)
     }
   }
 
@@ -75,7 +94,36 @@ export class AccountServiceImpl implements IAccountService {
       })
       return dto
     } catch (error) {
-      throw new Error((error as Error).message)
+      handleThrowError(error)
+    }
+  }
+
+  async setProfile(accountId: number, profile: CreateProfileOutputDTO): Promise<GetAccountOutputDTO> {
+    try {
+      // tìm kiếm caí account trong database
+      const account = await this.repo.findById(accountId)
+      if (!account) throw new BadRequest()
+      const profile = new Profiles({
+        id: account.profile.id,
+        fullName: account.profile.fullName,
+        bio: account.profile.bio,
+        phoneNumber: account.profile.phoneNumber,
+        avatarUrl: account.profile.avatarUrl,
+        coverUrl: account.profile.coverUrl
+      })
+      account.profile = profile
+      const enitty = await this.repo.update(account)
+      if (!enitty) throw new BadRequest()
+      const dto = new GetAccountOutputDTO({
+        id: enitty.id,
+        email: enitty.email,
+        username: enitty.username,
+        password: enitty.password,
+        profile: enitty.profile
+      })
+      return dto
+    } catch (error) {
+      handleThrowError(error)
     }
   }
 }

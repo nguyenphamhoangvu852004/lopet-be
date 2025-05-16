@@ -3,6 +3,7 @@ import { httpStatusCode } from '~/global/httpStatusCode'
 import { sendResponse, ApiResponse } from '~/response/api.response'
 import { Response } from 'express'
 export function handleThrowError(error: unknown): never {
+  console.error('[ERROR]', error)
   if (error instanceof HttpError) {
     throw error
   } else {

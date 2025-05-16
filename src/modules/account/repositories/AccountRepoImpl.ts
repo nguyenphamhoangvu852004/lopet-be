@@ -1,5 +1,7 @@
+import { log } from 'console'
 import { Repository } from 'typeorm'
 import { appDataSource } from '~/config/appDataSource'
+import { logger } from '~/config/logger'
 import { Accounts } from '~/entities/accounts.entity'
 import { Profiles } from '~/entities/profiles.entity'
 import { CreateAccountDTO } from '~/modules/account/dto/Create'
@@ -15,7 +17,7 @@ export default class AccountRepoImpl implements IAccountRepo {
   }
   async findById(id: number): Promise<Accounts | null> {
     const account = await this.accountsRepo.findOne({
-      where: { id },
+      where: { id: id },
       relations: {
         profile: true
       }
@@ -23,7 +25,7 @@ export default class AccountRepoImpl implements IAccountRepo {
     if (!account) {
       return null
     }
-
+  console.log(account)
     return account
   }
 
@@ -37,7 +39,6 @@ export default class AccountRepoImpl implements IAccountRepo {
     if (!account) {
       return null
     }
-    account.profile = data.profile ?? account.profile
     const updatedEntity = await this.accountsRepo.save(account)
     return updatedEntity
   }
@@ -51,6 +52,7 @@ export default class AccountRepoImpl implements IAccountRepo {
         profile: true
       }
     })
+    logger.error("account", account)
     if (!account) {
       return null
     }

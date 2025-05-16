@@ -1,5 +1,6 @@
 import 'reflect-metadata'
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Accounts } from '~/entities/accounts.entity'
 import { BaseEntity } from '~/entities/base.entity'
 
 @Entity({ name: 'profiles' })
@@ -8,24 +9,37 @@ export class Profiles extends BaseEntity {
   id!: number
 
   @Column({
-    type: 'varchar'
+    type: 'varchar',
+    nullable: true
   })
   fullName!: string
 
   @Column({
-    type: 'varchar'
+    type: 'varchar',
+    nullable: true
   })
   phoneNumber!: string
 
   @Column({
-    type: 'text'
+    type: 'text',
+    nullable: true
+  })
+  bio!: string
+
+  @Column({
+    type: 'text',
+    nullable: true
   })
   avatarUrl!: string
 
   @Column({
-    type: 'text'
+    type: 'text',
+    nullable: true
   })
   coverUrl!: string
+
+  @OneToOne(() => Accounts, (account) => account.profile)
+  account!: Accounts
 
   constructor(data?: Partial<Profiles>) {
     super()

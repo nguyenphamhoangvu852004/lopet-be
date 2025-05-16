@@ -22,10 +22,11 @@ export async function startServer() {
   const route: core.Router = express.Router()
   const server = createServer(app)
   app.use(express.json({ strict: true }))
+  app.use(express.urlencoded({ extended: true }))
   const io = new Server(server, {
     cors: {
-      origin: '*',
-      methods: ['GET', 'POST']
+      origin: ['*', 'http://localhost:5173'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
     }
   })
 

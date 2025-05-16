@@ -1,5 +1,9 @@
 import { IAccountService } from '~/modules/account/services/IAccountService'
 import { Request, Response } from 'express'
+import { ApiResponse, sendResponse } from '~/response/api.response'
+import { httpStatusCode } from '~/global/httpStatusCode'
+import { handleControllerError } from '~/utils/handle.util'
+import { log } from 'console'
 export class AccountController {
   constructor(private service: IAccountService) {
     this.service = service
@@ -7,21 +11,20 @@ export class AccountController {
 
   async getById(req: Request, res: Response) {
     try {
-      const id = req.params.id
+      const { id } = req.params
+      log(id)
       const account = await this.service.getById(Number(id))
-      if (!account) throw new Error('Not found')
-      res.status(200).json({
-        code: 200,
-        message: 'success',
-        data: account
-      })
+      sendResponse(
+        new ApiResponse({
+          data: account,
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Get account successfully'
+        })
+      )
       return
     } catch (error) {
-      res.status(400).json({
-        code: 400,
-        message: (error as Error).message,
-        data: error
-      })
+      handleControllerError(error, res)
       return
     }
   }
@@ -46,6 +49,4 @@ export class AccountController {
       return
     }
   }
-
-
 }
