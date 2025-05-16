@@ -1,7 +1,9 @@
 import { Router } from 'express'
+import { validate } from '~/middlewares/validation.middleware'
 import AccountRepoImpl from '~/modules/account/repositories/AccountRepoImpl'
 import { AuthController } from '~/modules/auth/controller'
 import AuthServiceImpl from '~/modules/auth/services/AuthServiceImpl'
+import { loginValidation, registerValidation } from '~/validation/schema.validation'
 
 export const authRouter = Router()
 const accountRepo = new AccountRepoImpl()
@@ -10,5 +12,5 @@ const controller = new AuthController(authService)
 
 // Login with Facebook
 
-authRouter.post('/login', controller.login.bind(controller))
-authRouter.post('/signup', controller.register.bind(controller))
+authRouter.post('/login', validate(loginValidation), controller.login.bind(controller))
+authRouter.post('/signup', validate(registerValidation), controller.register.bind(controller))
