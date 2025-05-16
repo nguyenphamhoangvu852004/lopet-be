@@ -21,7 +21,7 @@ export async function startServer() {
   const app: core.Express = express()
   const route: core.Router = express.Router()
   const server = createServer(app)
-  app.use(express.json())
+  app.use(express.json({ strict: true }))
   const io = new Server(server, {
     cors: {
       origin: '*',
