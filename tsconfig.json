@@ -12,7 +12,8 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "paths": {
-      "~/*": ["src/*"] // Đường dẫn tương đối cho các import (alias)
+      "~/*": ["src/*"], // Đường dẫn tương đối cho các import (alias)
+      "src/*": ["src/*"]
     }
   },
   "files": ["src/type.d.ts"], // Các file dùng để defined global type cho dự án
