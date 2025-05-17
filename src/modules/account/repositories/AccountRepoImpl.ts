@@ -25,7 +25,7 @@ export default class AccountRepoImpl implements IAccountRepo {
     if (!account) {
       return null
     }
-  console.log(account)
+    console.log(account)
     return account
   }
 
@@ -52,7 +52,7 @@ export default class AccountRepoImpl implements IAccountRepo {
         profile: true
       }
     })
-    logger.error("account", account)
+    logger.error('account', account)
     if (!account) {
       return null
     }

@@ -1,6 +1,5 @@
 import 'reflect-metadata'
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
-
 import { BaseEntity } from '~/entities/base.entity'
 
 @Entity({

@@ -5,6 +5,7 @@ import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { LoginInputDTO, LoginOutputDTO } from '~/modules/auth/dto/Login'
 import { RegisterInputDTO, RegisterOutputDTO } from '~/modules/auth/dto/Register'
+import { ResetPasswordInputDto, ResetPasswordOutputDto } from '~/modules/auth/dto/ResetPassword'
 import IAuthService from '~/modules/auth/services/IAuthService'
 import { comparePassword, hashPassword } from '~/utils/bcryptjs.util'
 import { handleThrowError } from '~/utils/handle.util'
@@ -58,6 +59,25 @@ export default class AuthServiceImpl implements IAuthService {
         })
       )
       return new RegisterOutputDTO({
+        id: response.id,
+        email: response.email,
+        username: response.username
+      })
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
+  async resetPassword(data: ResetPasswordInputDto): Promise<ResetPasswordOutputDto> {
+    try {
+      const account = await this.accountRepo.findByEmail(data.email)
+      if (!account) throw new NotFound()
+      if (data.password !== data.confirmPassword) throw new BadRequest()
+      const hashedPassword = await hashPassword(data.password)
+      account.password = hashedPassword
+      const response = await this.accountRepo.update(account)
+      if (!response) throw new BadRequest()
+      return new ResetPasswordOutputDto({
         id: response.id,
         email: response.email,
         username: response.username
