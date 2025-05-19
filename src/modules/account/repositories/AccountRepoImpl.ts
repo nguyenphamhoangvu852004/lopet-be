@@ -1,4 +1,3 @@
-import { log } from 'console'
 import { Repository } from 'typeorm'
 import { appDataSource } from '~/config/appDataSource'
 import { logger } from '~/config/logger'

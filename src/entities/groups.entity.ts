@@ -1,7 +1,17 @@
 import 'reflect-metadata'
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn
+} from 'typeorm'
 import { Accounts } from '~/entities/accounts.entity'
 import { BaseEntity } from '~/entities/base.entity'
+import { Posts } from '~/entities/posts.entity'
 
 export enum GROUPTYPE {
   PUBLIC = 'PUBLIC',
@@ -33,6 +43,9 @@ export class Groups extends BaseEntity {
     inverseJoinColumn: { name: 'account_id', referencedColumnName: 'id' }
   })
   members!: Accounts[]
+
+  @OneToMany(() => Posts, (post) => post.group, { nullable: true, onDelete: 'CASCADE' })
+  posts!: Posts[]
 
   constructor(data?: Partial<Groups>) {
     super()

@@ -11,6 +11,6 @@ const authService = new AuthServiceImpl(accountRepo)
 const controller = new AuthController(authService)
 
 // Login with Facebook
-authRouter.post('/', controller.resetPassword.bind(controller))
+authRouter.post('/reset', controller.resetPassword.bind(controller))
 authRouter.post('/login', validate(loginValidation), controller.login.bind(controller))
 authRouter.post('/signup', validate(registerValidation), controller.register.bind(controller))
