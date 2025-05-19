@@ -38,8 +38,11 @@ export class Posts extends BaseEntity {
     Object.assign(this, data)
   }
   setType() {
-    if (this.group == null) {
-      this.postType = POSTTYPE.USER
+    if (this.group != null) {
+      this.postType = POSTTYPE.GROUP
     }
+  }
+  getType() {
+    return this.postType
   }
 }

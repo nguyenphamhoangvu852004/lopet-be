@@ -1,9 +1,10 @@
 import 'reflect-metadata'
-import { Column, Entity, JoinColumn, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { BaseEntity } from '~/entities/base.entity'
 import { Groups } from '~/entities/groups.entity'
 import { Posts } from '~/entities/posts.entity'
 import { Profiles } from '~/entities/profiles.entity'
+import { Roles } from '~/entities/roles.entity'
 
 @Entity({ name: 'accounts' })
 export class Accounts extends BaseEntity {
@@ -34,6 +35,10 @@ export class Accounts extends BaseEntity {
 
   @OneToMany(() => Posts, (post) => post.accounts, { nullable: true, onDelete: 'CASCADE' })
   posts!: Posts[]
+
+  @ManyToOne(() => Roles, (role) => role.accounts, { nullable: true })
+  role!: Roles
+
   constructor(data?: Partial<Accounts>) {
     super()
     Object.assign(this, data)

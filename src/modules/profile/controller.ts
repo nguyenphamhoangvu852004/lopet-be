@@ -8,7 +8,6 @@ import { CreateProfileInputDTO, CreateProfileOutputDTO } from '~/modules/profile
 import { BadRequest } from '~/error/error.custom'
 import cloudinary from '~/config/cloudinary'
 import { UpdateProfileInputDTO } from '~/modules/profile/dto/Update'
-import { logger } from '~/config/logger'
 
 export class ProfileController {
   constructor(
