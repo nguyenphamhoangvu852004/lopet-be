@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { upload } from '~/config/multerConfig'
 import AccountRepoImpl from '~/modules/account/repositories/AccountRepoImpl'
 import { AccountServiceImpl } from '~/modules/account/services/AccountServiceImpl'
 import { ProfileController } from '~/modules/profile/controller'
@@ -13,9 +14,23 @@ const accoutRepo = new AccountRepoImpl()
 const accountService = new AccountServiceImpl(accoutRepo)
 const controller = new ProfileController(profileService, accountService)
 
-profileRouter.post('/', controller.create.bind(controller))
+profileRouter.post(
+  '/',
+  upload.fields([
+    { name: 'avatar', maxCount: 1 },
+    { name: 'cover', maxCount: 1 }
+  ]),
+  controller.create.bind(controller)
+)
 profileRouter.post('/:id', controller.setToAccount.bind(controller))
 profileRouter.get('/:id', controller.getById.bind(controller))
 profileRouter.get('/accounts/:id', controller.getByAccountId.bind(controller))
 
-profileRouter.patch('/:id', controller.update.bind(controller))
+profileRouter.patch(
+  '/:id',
+  upload.fields([
+    { name: 'avatar', maxCount: 1 },
+    { name: 'cover', maxCount: 1 }
+  ]),
+  controller.update.bind(controller)
+)

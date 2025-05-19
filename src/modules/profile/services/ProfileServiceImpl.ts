@@ -1,7 +1,6 @@
 import { log } from 'console'
 import { Profiles } from '~/entities/profiles.entity'
 import { BadRequest, NotFound } from '~/error/error.custom'
-import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import { CreateProfileInputDTO, CreateProfileOutputDTO } from '~/modules/profile/dto/Create'
 import { GetProfileOutputDTO } from '~/modules/profile/dto/Get'
 import { UpdateProfileInputDTO, UpdateProfileOutputDTO } from '~/modules/profile/dto/Update'
@@ -83,7 +82,7 @@ export default class ProfileServiceImpl implements IProfileService {
       log(data, accountId)
       const profile: Profiles | null = await this.profileRepo.findById(data)
       if (!profile) throw new BadRequest()
-      const response = await this.profileRepo.setToAccount(data, profile)
+      const response = await this.profileRepo.setToAccount(accountId, profile)
       if (!response) throw new BadRequest()
       return new GetProfileOutputDTO({
         id: response.id,
