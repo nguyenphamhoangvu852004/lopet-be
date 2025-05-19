@@ -27,16 +27,17 @@ export class Accounts extends BaseEntity {
   @JoinColumn({ name: 'profileId' })
   profile!: Profiles
 
-  @OneToMany(() => Groups, (group) => group.owner, { nullable: true, onDelete: 'CASCADE' })
+  @OneToMany(() => Groups, (group) => group.owner)
   groups!: Groups[]
 
-  @ManyToMany(() => Groups, (group) => group.members, { nullable: true })
+  @ManyToMany(() => Groups, (group) => group.members, { onDelete: 'CASCADE', nullable: true })
   memberGroups!: Groups[]
 
-  @OneToMany(() => Posts, (post) => post.accounts, { nullable: true, onDelete: 'CASCADE' })
+  @OneToMany(() => Posts, (post) => post.accounts, { nullable: true })
   posts!: Posts[]
 
   @ManyToOne(() => Roles, (role) => role.accounts, { nullable: true })
+  @JoinColumn({ name: 'role_id' })
   role!: Roles
 
   constructor(data?: Partial<Accounts>) {

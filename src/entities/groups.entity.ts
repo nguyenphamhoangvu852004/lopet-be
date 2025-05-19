@@ -32,11 +32,11 @@ export class Groups extends BaseEntity {
   })
   type!: GROUPTYPE
 
-  @ManyToOne(() => Accounts, { nullable: false })
+  @ManyToOne(() => Accounts, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'owner' })
   owner!: Accounts
 
-  @ManyToMany(() => Accounts, (account) => account.memberGroups)
+  @ManyToMany(() => Accounts, (account) => account.memberGroups, { onDelete: 'CASCADE', nullable: true })
   @JoinTable({
     name: 'group_members',
     joinColumn: { name: 'group_id', referencedColumnName: 'id' },
@@ -44,7 +44,7 @@ export class Groups extends BaseEntity {
   })
   members!: Accounts[]
 
-  @OneToMany(() => Posts, (post) => post.group, { nullable: true, onDelete: 'CASCADE' })
+  @OneToMany(() => Posts, (post) => post.group, { nullable: true })
   posts!: Posts[]
 
   constructor(data?: Partial<Groups>) {
