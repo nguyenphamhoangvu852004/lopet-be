@@ -3,7 +3,7 @@ import core from 'express-serve-static-core'
 import { environment } from 'src/config/env'
 import { createServer } from 'node:http'
 import { Server } from 'socket.io'
-import { appDataSource } from '~/config/appDataSource'
+import { appDataSource, redis } from '~/config/appDataSource'
 import { router } from '~/routes/index'
 import { logger } from '~/config/logger'
 const PORT = environment.APP_PORT
@@ -19,6 +19,22 @@ function startDatabase() {
     .catch((error) => {
       logger.error((error as Error).message)
     })
+
+  redis.on('connect', () => {
+    logger.info('Redis client connected')
+  })
+
+  redis.on('ready', () => {
+    logger.info('Redis client ready')
+  })
+
+  redis.on('error', (err) => {
+    logger.error('Redis client error:', err)
+  })
+
+  redis.on('end', () => {
+    logger.info('Redis client disconnected')
+  })
 }
 
 // APPLICATION
@@ -64,6 +80,9 @@ export async function startServer() {
 
   app.use(route)
   startDatabase()
+
+  await redis.connect()
+  redis.set('test', 'Hello world')
   server.listen(PORT, function () {
     logger.info(`Server started at ${HOSTNAME}:${PORT}`)
   })

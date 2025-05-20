@@ -3,6 +3,7 @@ import { Accounts } from '~/entities/accounts.entity'
 import { BadRequest, Conflict, NotFound } from '~/error/error.custom'
 import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
+import { VerifyAccountInputDTO, VerifyAccountOutputDTO } from '~/modules/auth/dto/ForgotPassword'
 import { LoginInputDTO, LoginOutputDTO } from '~/modules/auth/dto/Login'
 import { RegisterInputDTO, RegisterOutputDTO } from '~/modules/auth/dto/Register'
 import { ResetPasswordInputDto, ResetPasswordOutputDto } from '~/modules/auth/dto/ResetPassword'
@@ -82,6 +83,17 @@ export default class AuthServiceImpl implements IAuthService {
         email: response.email,
         username: response.username
       })
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
+  async verifyAccount(data: VerifyAccountInputDTO): Promise<VerifyAccountOutputDTO> {
+    try {
+      const account = await this.accountRepo.findByEmail(data.email)
+      if (!account) throw new NotFound()
+      if (!(await comparePassword(data.password, account.password))) throw new BadRequest()
+      return new VerifyAccountOutputDTO({ isValid: true })
     } catch (error) {
       handleThrowError(error)
     }
