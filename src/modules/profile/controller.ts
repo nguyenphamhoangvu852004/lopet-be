@@ -8,6 +8,7 @@ import { CreateProfileInputDTO, CreateProfileOutputDTO } from '~/modules/profile
 import { BadRequest } from '~/error/error.custom'
 import cloudinary from '~/config/cloudinary'
 import { UpdateProfileInputDTO } from '~/modules/profile/dto/Update'
+import { GetListInputDTO } from '~/modules/profile/dto/Get'
 
 export class ProfileController {
   constructor(
@@ -16,6 +17,30 @@ export class ProfileController {
   ) {
     this.profileService = profileService
     this.accountService = accountService
+  }
+
+  async getList(req: Request, res: Response) {
+    try {
+      const fullName = req.query.fullName ? String(req.query.fullName) : undefined
+      const id = req.query.id ? Number(req.query.id) : undefined
+      // const phoneNumber = req.query.phoneNumber ? String(req.query.phoneNumber) : undefined
+      // const bio = req.query.bio ? String(req.query.bio) : undefined
+      const dto = new GetListInputDTO({
+        fullName,
+        id
+      })
+      const response = await this.profileService.findAll(dto)
+      sendResponse(
+        new ApiResponse({
+          data: response,
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Get profile successfully'
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+    }
   }
 
   async getById(req: Request, res: Response) {

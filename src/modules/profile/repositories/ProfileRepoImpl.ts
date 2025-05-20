@@ -1,8 +1,9 @@
-import { Repository } from 'typeorm'
+import { ILike, Repository } from 'typeorm'
 import { appDataSource } from '~/config/appDataSource'
 import { logger } from '~/config/logger'
 import { Accounts } from '~/entities/accounts.entity'
 import { Profiles } from '~/entities/profiles.entity'
+import { GetListInputDTO } from '~/modules/profile/dto/Get'
 import IProfileRepo from '~/modules/profile/repositories/IProfileRepo'
 
 export default class ProfileRepoImpl implements IProfileRepo {
@@ -11,6 +12,29 @@ export default class ProfileRepoImpl implements IProfileRepo {
   constructor() {
     this.profileRepo = appDataSource.getRepository(Profiles)
     this.accountRepo = appDataSource.getRepository(Accounts)
+  }
+  async findAll(data: GetListInputDTO): Promise<Profiles[]> {
+    try {
+      const { id, fullName } = data
+      const whereClause: any = {}
+
+      if (id) {
+        whereClause.id = id
+      }
+
+      if (fullName) {
+        // tìm gần đúng, không phân biệt hoa thường
+        whereClause.fullName = ILike(`%${fullName}%`)
+      }
+
+      const profiles: Profiles[] = await this.profileRepo.find({
+        where: whereClause
+      })
+      return profiles
+    } catch (error) {
+      logger.error(error)
+      return []
+    }
   }
   async findById(id: number): Promise<Profiles | null> {
     try {

@@ -1,3 +1,11 @@
+export class GetListInputDTO {
+  id?: number
+  fullName?: string
+  constructor(data?: Partial<GetListInputDTO>) {
+    Object.assign(this, data)
+  }
+}
+
 export class GetProfileOutputDTO {
   id!: number
   fullName!: string

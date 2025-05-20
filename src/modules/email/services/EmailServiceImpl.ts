@@ -28,7 +28,7 @@ export default class EmailServiceImpl implements IEmailService {
       <h2 style="color: #333;">Xác thực tài khoản</h2>
       <p>Chào bạn,</p>
       <p>Cảm ơn bạn đã đăng ký tài khoản. Đây là mã OTP để xác thực địa chỉ email của bạn:</p>
-      <p style="font-size: 24px; font-weight: bold; color: #007bff;">${otp}</p>
+      <p style="font-size: 24px; font-weight: bold; color:rgb(111, 0, 255);">${otp}</p>
       <p>Mã OTP này có hiệu lực trong 2 phút.</p>
       <p>Nếu bạn không yêu cầu mã OTP này, vui lòng bỏ qua email này.</p>
       <br>
