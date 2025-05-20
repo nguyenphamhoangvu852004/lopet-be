@@ -7,5 +7,5 @@ export default interface IAuthService {
   login(data: LoginInputDTO): Promise<LoginOutputDTO>
   register(data: RegisterInputDTO): Promise<RegisterOutputDTO>
   resetPassword(data: ResetPasswordInputDto): Promise<ResetPasswordOutputDto>
-verifyAccount(data: VerifyAccountInputDTO):Promise<VerifyAccountOutputDTO>
+  verifyAccount(data: VerifyAccountInputDTO): Promise<VerifyAccountOutputDTO>
 }

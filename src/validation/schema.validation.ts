@@ -8,6 +8,6 @@ export const registerValidation = Joi.object({
 })
 
 export const loginValidation = Joi.object({
-  email: Joi.string().email().required().trim().strict().min(11),
+  username: Joi.string().required().trim().strict(),
   password: Joi.string().required().min(6).trim().strict()
 })

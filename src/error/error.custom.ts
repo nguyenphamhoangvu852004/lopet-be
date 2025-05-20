@@ -18,8 +18,8 @@ export class NotFound extends HttpError {
 }
 
 export class BadRequest extends HttpError {
-  constructor() {
-    super(httpStatusCode.BAD_REQUEST, httpStatusMessage.BAD_REQUEST)
+  constructor(message?: string) {
+    super(httpStatusCode.BAD_REQUEST, message ?? httpStatusMessage.BAD_REQUEST)
   }
 }
 

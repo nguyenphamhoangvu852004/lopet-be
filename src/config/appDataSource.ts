@@ -22,5 +22,3 @@ export const redis = createClient({
     port: environment.REDIS_PORT // port host map tới container Redis
   }
 })
-
-

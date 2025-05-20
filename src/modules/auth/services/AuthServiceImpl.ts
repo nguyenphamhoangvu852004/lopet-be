@@ -1,4 +1,5 @@
 import { log } from 'console'
+import { redis } from '~/config/appDataSource'
 import { Accounts } from '~/entities/accounts.entity'
 import { BadRequest, Conflict, NotFound } from '~/error/error.custom'
 import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
@@ -46,9 +47,12 @@ export default class AuthServiceImpl implements IAuthService {
   }
   async register(data: RegisterInputDTO): Promise<RegisterOutputDTO> {
     try {
-      log(data)
+      const isVerified = await redis.get(`email_verified:${data.email}`)
+      if (!isVerified) {
+        throw new BadRequest('Bạn cần xác thực OTP trước khi đăng ký.')
+      }
+      await redis.del(`email_verified:${data.email}`)
       const account = await this.accountRepo.findByEmail(data.email)
-      log(account)
       if (account) throw new Conflict()
       if (data.password !== data.confirmPassword) throw new BadRequest()
       const hashedPassword = await hashPassword(data.password)
