@@ -1,3 +1,4 @@
+import { PostLikes } from '~/entities/postLikes.entity'
 import { MEDIATYPE, PostMedias } from '~/entities/postMedias.entity'
 import { Posts } from '~/entities/posts.entity'
 import { BadRequest, NotFound } from '~/error/error.custom'
@@ -5,9 +6,16 @@ import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import IGroupRepo from '~/modules/group/repositories/IGroupRepo'
 import { CreatePostInputDTO, CreatePostOutputDTO, PostMediaInputDTO } from '~/modules/post/dto/Create'
 import { DeletePostOutputDTO } from '~/modules/post/dto/DeletePostOutputDTO'
-import { GetPostOutputDTO } from '~/modules/post/dto/Get'
+import {
+  AccountDTO,
+  GetPostByAccountIdOutputDTO,
+  GetPostDetailOutputDTO,
+  GetPostOutputDTO
+} from '~/modules/post/dto/Get'
+import { LikePostInputDTO, LikePostOuputDTO, UnlikePostInputDTO, UnlikePostOutputDTO } from '~/modules/post/dto/React'
 import IPostRepo from '~/modules/post/repositories/IPostRepo'
 import IPostService from '~/modules/post/services/IPostService'
+import IPostLikeRepo from '~/modules/postLike/repositories/IPostLikeRepo'
 import { IPostMediaRepositories } from '~/modules/postMedia/repositories/IPostMediaRepositories'
 import { handleThrowError } from '~/utils/handle.util'
 
@@ -16,31 +24,120 @@ export default class PostServiceImpl implements IPostService {
     private postRepo: IPostRepo,
     private accountRepo: IAccountRepo,
     private groupRepo: IGroupRepo,
-    private postMediaRepo: IPostMediaRepositories
+    private postMediaRepo: IPostMediaRepositories,
+    private postLikesRepo: IPostLikeRepo
   ) {
     this.postRepo = postRepo
     this.accountRepo = accountRepo
     this.groupRepo = groupRepo
     this.postMediaRepo = postMediaRepo
+    this.postLikesRepo = postLikesRepo
+  }
+  async getByAccountId(id: number): Promise<GetPostByAccountIdOutputDTO[]> {
+    try {
+      const listEntity = await this.postRepo.getByAccountId(id)
+
+      if (!listEntity) throw new NotFound()
+      const listOutDto: GetPostByAccountIdOutputDTO[] = []
+      for (const item of listEntity) {
+        console.log(item)
+        const dto = new GetPostByAccountIdOutputDTO({
+          content: item.content,
+          groupId: item.group?.id ?? null,
+          postId: item.id,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt ?? null,
+          postType: item.postType,
+          likeAmount: item.postLikes.length,
+          postMedias: []
+        })
+
+        if (!dto.postMedias) {
+          dto.postMedias = []
+        }
+        for (const i of item.postMedias) {
+          const postMedia = new PostMediaInputDTO({
+            mediaUrl: i.mediaUrl,
+            mediaType: i.mediaType,
+            createdAt: i.createdAt,
+            updatedAt: i.updatedAt ?? null
+          })
+          dto.postMedias.push(postMedia)
+        }
+        listOutDto.push(dto)
+      }
+      return listOutDto
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+  async getAll(): Promise<GetPostOutputDTO[]> {
+    try {
+      const listEntity = await this.postRepo.getAll()
+      if (!listEntity) throw new NotFound()
+      const listOutDto: GetPostOutputDTO[] = []
+      for (const item of listEntity) {
+        console.log(item)
+        const dto = new GetPostOutputDTO({
+          accountId: item.accounts.id,
+          content: item.content,
+          groupId: item.group?.id ?? null,
+          postId: item.id,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt ?? null,
+          postType: item.postType,
+          likeAmount: item.postLikes.length,
+          postMedias: []
+        })
+
+        if (!dto.postMedias) {
+          dto.postMedias = []
+        }
+        for (const i of item.postMedias) {
+          const postMedia = new PostMediaInputDTO({
+            mediaUrl: i.mediaUrl,
+            mediaType: i.mediaType,
+            createdAt: i.createdAt,
+            updatedAt: i.updatedAt ?? null
+          })
+          dto.postMedias.push(postMedia)
+        }
+        listOutDto.push(dto)
+      }
+      return listOutDto
+    } catch (error) {
+      handleThrowError(error)
+    }
   }
 
-  async getOneById(id): Promise<GetPostOutputDTO> {
+  async getOneById(id): Promise<GetPostDetailOutputDTO> {
     try {
       const response: Posts | null = await this.postRepo.getOne(id)
       if (!response) throw new NotFound()
-      const dto = new GetPostOutputDTO({
+      const dto = new GetPostDetailOutputDTO({
         accountId: response.accounts.id,
         content: response.content,
         groupId: response.group?.id ?? null,
         postId: response.id,
         createdAt: response.createdAt,
         updatedAt: response.updatedAt ?? null,
+        likeAmount: response.postLikes.length,
         postType: response.postType,
+        listLike: [],
         postMedias: []
       })
       if (!dto.postMedias) {
         dto.postMedias = []
       }
+      const account = await this.accountRepo.findById(response.accounts.id)
+      if (!account) throw new BadRequest()
+      dto.listLike.push(
+        new AccountDTO({
+          id: account.id,
+          username: account.username,
+          email: account.email
+        })
+      )
       for (const item of response.postMedias) {
         const postMedia = new PostMediaInputDTO({
           mediaUrl: item.mediaUrl,
@@ -121,6 +218,63 @@ export default class PostServiceImpl implements IPostService {
       const response = await this.postRepo.delete(id)
       if (!response) throw new BadRequest()
       return new DeletePostOutputDTO({ id: response.id })
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
+  async like(data: LikePostInputDTO): Promise<LikePostOuputDTO> {
+    try {
+      const post = await this.postRepo.getOne(data.postId)
+      if (!post) throw new BadRequest()
+
+      const account = await this.accountRepo.findById(data.accountId)
+      if (!account) throw new BadRequest()
+
+      // ✅ Kiểm tra like đã tồn tại hay chưa bằng repo
+      const existingLike = await this.postLikesRepo.findByAccountAndPost(account.id, post.id)
+      if (existingLike) {
+        return new LikePostOuputDTO({
+          message: 'You have already liked this post'
+        })
+      }
+
+      const postLike = new PostLikes({
+        post: post,
+        account: account
+      })
+
+      await this.postLikesRepo.create(postLike)
+
+      return new LikePostOuputDTO({
+        message: 'Like post successfully'
+      })
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
+  async unLike(data: UnlikePostInputDTO): Promise<UnlikePostOutputDTO> {
+    try {
+      const post = await this.postRepo.getOne(data.postId)
+      if (!post) throw new BadRequest()
+
+      const account = await this.accountRepo.findById(data.accountId)
+      if (!account) throw new BadRequest()
+
+      const existingLike = await this.postLikesRepo.findByAccountAndPost(account.id, post.id)
+      if (!existingLike) {
+        return new UnlikePostOutputDTO({
+          message: 'You have already unliked this post' // đúng rồi nè
+        })
+      }
+
+      // ✅ Xoá đúng entity có ID
+      await this.postLikesRepo.delete(existingLike)
+
+      return new UnlikePostOutputDTO({
+        message: 'Unlike post successfully'
+      })
     } catch (error) {
       handleThrowError(error)
     }
