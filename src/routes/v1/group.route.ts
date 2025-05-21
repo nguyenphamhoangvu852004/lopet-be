@@ -1,4 +1,3 @@
-import { group } from 'console'
 import { Router } from 'express'
 import AccountRepoImpl from '~/modules/account/repositories/AccountRepoImpl'
 import { GroupController } from '~/modules/group/controller'

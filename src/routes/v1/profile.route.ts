@@ -25,6 +25,7 @@ profileRouter.post(
   validate(profileValidation),
   controller.create.bind(controller)
 )
+
 profileRouter.get('/', controller.getList.bind(controller))
 profileRouter.post('/:id', controller.setToAccount.bind(controller))
 profileRouter.get('/:id', controller.getById.bind(controller))

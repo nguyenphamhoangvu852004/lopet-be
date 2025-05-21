@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { accountRouter } from '~/routes/v1/account.route'
 import { authRouter } from '~/routes/v1/auth.route'
 import { emailRouter } from '~/routes/v1/email.route'
+import { friendShipRouter } from '~/routes/v1/friendShip.route'
 import { groupRouter } from '~/routes/v1/group.route'
 import { messageRouter } from '~/routes/v1/message.route'
 import { postRouter } from '~/routes/v1/post.route'
@@ -16,3 +17,4 @@ router.use('/emails', emailRouter)
 router.use('/profiles', profileRouter)
 router.use('/groups', groupRouter)
 router.use('/posts', postRouter)
+router.use('/friendships', friendShipRouter)

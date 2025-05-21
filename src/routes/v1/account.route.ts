@@ -9,6 +9,7 @@ const repo = new AccountRepoImpl()
 const service = new AccountServiceImpl(repo)
 const controller = new AccountController(service)
 
+accountRouter.get('/', controller.getList.bind(controller))
 accountRouter.get('/:id', controller.getById.bind(controller))
 accountRouter.post('/ban/:id', controller.banId.bind(controller))
 accountRouter.post('/unban/:id', controller.unbanId.bind(controller))
