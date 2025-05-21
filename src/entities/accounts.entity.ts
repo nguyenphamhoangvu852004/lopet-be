@@ -2,8 +2,10 @@ import 'reflect-metadata'
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { BaseEntity } from '~/entities/base.entity'
 import { Groups } from '~/entities/groups.entity'
+import { PostLikes } from '~/entities/postLikes.entity'
 import { Posts } from '~/entities/posts.entity'
 import { Profiles } from '~/entities/profiles.entity'
+import { Reports } from '~/entities/reports.entity'
 import { Roles } from '~/entities/roles.entity'
 
 @Entity({ name: 'accounts' })
@@ -23,6 +25,12 @@ export class Accounts extends BaseEntity {
   })
   password!: string
 
+  @Column({
+    type: 'tinyint',
+    default: 0
+  })
+  isBanned!: number | null
+
   @OneToOne(() => Profiles, (profile) => profile.account, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'profileId' })
   profile!: Profiles
@@ -39,6 +47,12 @@ export class Accounts extends BaseEntity {
   @ManyToOne(() => Roles, (role) => role.accounts, { nullable: true })
   @JoinColumn({ name: 'role_id' })
   role!: Roles
+
+  @OneToMany(() => PostLikes, (postlikes) => postlikes.account)
+  postlikes!: PostLikes[]
+
+  @OneToMany(() => Reports, (report) => report.accounts)
+  reports!: Reports[]
 
   constructor(data?: Partial<Accounts>) {
     super()

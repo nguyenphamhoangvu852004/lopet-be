@@ -3,6 +3,7 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColum
 import { Accounts } from '~/entities/accounts.entity'
 import { BaseEntity } from '~/entities/base.entity'
 import { Groups } from '~/entities/groups.entity'
+import { PostLikes } from '~/entities/postLikes.entity'
 import { PostMedias } from '~/entities/postMedias.entity'
 
 export enum POSTTYPE {
@@ -37,6 +38,9 @@ export class Posts extends BaseEntity {
 
   @OneToMany(() => PostMedias, (postMedias) => postMedias.post, { cascade: true })
   postMedias!: PostMedias[]
+
+  @OneToMany(() => PostLikes, (postLikes) => postLikes.post, { cascade: true, nullable: true })
+  postLikes!: PostLikes[]
 
   constructor(data?: Partial<Posts>) {
     super()
