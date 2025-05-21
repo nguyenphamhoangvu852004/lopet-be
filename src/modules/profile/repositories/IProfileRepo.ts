@@ -5,6 +5,7 @@ export default interface IProfileRepo {
   findAll(data: GetListInputDTO): Promise<Profiles[]>
   findById(id: number): Promise<Profiles | null>
   findByAccountId(id: number): Promise<Profiles | null>
+  findListByFullName(data: string): Promise<Profiles[]>
   create(data: Profiles): Promise<Profiles | null>
   update(id: number, data: Profiles): Promise<Profiles | null>
   setToAccount(acountId: number, profileId: Profiles): Promise<Profiles | null>

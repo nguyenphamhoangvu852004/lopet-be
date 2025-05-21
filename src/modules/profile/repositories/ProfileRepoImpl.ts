@@ -13,6 +13,10 @@ export default class ProfileRepoImpl implements IProfileRepo {
     this.profileRepo = appDataSource.getRepository(Profiles)
     this.accountRepo = appDataSource.getRepository(Accounts)
   }
+  findListByFullName(data: string): Promise<Profiles[]> {
+    const fullName = ILike(`%${data}%`)
+    return this.profileRepo.find({ where: { fullName } })
+  }
   async findAll(data: GetListInputDTO): Promise<Profiles[]> {
     try {
       const { id, fullName } = data
