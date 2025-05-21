@@ -18,6 +18,11 @@ export class ProfileController {
     this.profileService = profileService
     this.accountService = accountService
   }
+  /**
+   * @queryParameters
+   *    - `fullName` (string): tìm kiếm theo họ tên.
+   *    - `id` (number): tìm kiếm theo id của profile.
+   */
 
   async getList(req: Request, res: Response) {
     try {
