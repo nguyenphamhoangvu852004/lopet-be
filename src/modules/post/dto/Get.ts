@@ -58,3 +58,10 @@ export class GetPostByAccountIdOutputDTO {
     Object.assign(this, data)
   }
 }
+
+export class GetPostListInputDTO {
+  content?: string
+  constructor(data?: Partial<GetPostListInputDTO>) {
+    Object.assign(this, data)
+  }
+}
