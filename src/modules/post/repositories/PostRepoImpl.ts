@@ -10,6 +10,20 @@ export default class PostRepoImpl implements IPostRepo {
   constructor() {
     this.postRepo = appDataSource.getRepository(Posts)
   }
+  async getAll(): Promise<Posts[]> {
+    const list = await this.postRepo.find({
+      relations: {
+        accounts: true,
+        postMedias: true,
+        group: true,
+        postLikes: {
+          account: true,
+          post: true
+        }
+      }
+    })
+    return list
+  }
 
   async getOne(id): Promise<Posts | null> {
     const post = await this.postRepo.findOne({
@@ -19,7 +33,8 @@ export default class PostRepoImpl implements IPostRepo {
       relations: {
         accounts: true,
         postMedias: true,
-        group: true
+        group: true,
+        postLikes: true
       }
     })
     if (!post) {
@@ -28,6 +43,22 @@ export default class PostRepoImpl implements IPostRepo {
     return post
   }
 
+  async getByAccountId(id: number): Promise<Posts[]> {
+    const list = await this.postRepo.find({
+      where: {
+        accounts: {
+          id: id
+        }
+      },
+      relations: {
+        accounts: true,
+        postMedias: true,
+        group: true,
+        postLikes: true
+      }
+    })
+    return list
+  }
   async create(data: Posts): Promise<Posts | null> {
     log(data)
     const post = await this.postRepo.save(data)
