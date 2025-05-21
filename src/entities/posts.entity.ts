@@ -1,8 +1,10 @@
 import 'reflect-metadata'
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { Accounts } from '~/entities/accounts.entity'
 import { BaseEntity } from '~/entities/base.entity'
 import { Groups } from '~/entities/groups.entity'
+import { PostLikes } from '~/entities/postLikes.entity'
+import { PostMedias } from '~/entities/postMedias.entity'
 
 export enum POSTTYPE {
   GROUP = 'GROUP',
@@ -14,7 +16,7 @@ export class Posts extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number
 
-  @ManyToOne(() => Accounts, (account) => account.posts)
+  @ManyToOne(() => Accounts, (account) => account.posts, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'account_id' })
   accounts!: Accounts
 
@@ -23,22 +25,32 @@ export class Posts extends BaseEntity {
   })
   content!: string
 
-  @ManyToOne(() => Groups, (group) => group.posts, { nullable: true })
+  @ManyToOne(() => Groups, (group) => group.posts, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'group_id' })
   group!: Groups | null
 
   @Column({
     type: 'enum',
-    enum: POSTTYPE
+    enum: POSTTYPE,
+    nullable: true
   })
   postType!: POSTTYPE
+
+  @OneToMany(() => PostMedias, (postMedias) => postMedias.post, { cascade: true })
+  postMedias!: PostMedias[]
+
+  @OneToMany(() => PostLikes, (postLikes) => postLikes.post, { cascade: true, nullable: true })
+  postLikes!: PostLikes[]
 
   constructor(data?: Partial<Posts>) {
     super()
     Object.assign(this, data)
   }
+
   setType() {
-    if (this.group == null) {
+    if (this.group != null) {
+      this.postType = POSTTYPE.GROUP
+    } else {
       this.postType = POSTTYPE.USER
     }
   }

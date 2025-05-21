@@ -49,4 +49,47 @@ export class AccountController {
       return
     }
   }
+  async banId(req: Request, res: Response) {
+    try {
+      const { id } = req.params
+      const account = await this.service.banId(Number(id))
+      sendResponse(
+        new ApiResponse({ data: account, res: res, statusCode: httpStatusCode.OK, message: 'Ban account successfully' })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+    }
+  }
+
+  async unbanId(req: Request, res: Response) {
+    try {
+      const { id } = req.params
+      const account = await this.service.unbanId(Number(id))
+      sendResponse(
+        new ApiResponse({
+          data: account,
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Unban account successfully'
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+    }
+  }
+  async delete(req: Request, res: Response) {
+    try {
+      const response = await this.service.delete(Number(req.params.id))
+      sendResponse(
+        new ApiResponse({
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Delete account successfully',
+          data: response
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+    }
+  }
 }

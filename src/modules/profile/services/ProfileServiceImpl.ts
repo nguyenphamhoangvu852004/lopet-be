@@ -2,7 +2,7 @@ import { log } from 'console'
 import { Profiles } from '~/entities/profiles.entity'
 import { BadRequest, NotFound } from '~/error/error.custom'
 import { CreateProfileInputDTO, CreateProfileOutputDTO } from '~/modules/profile/dto/Create'
-import { GetProfileOutputDTO } from '~/modules/profile/dto/Get'
+import { GetListInputDTO, GetProfileOutputDTO } from '~/modules/profile/dto/Get'
 import { UpdateProfileInputDTO, UpdateProfileOutputDTO } from '~/modules/profile/dto/Update'
 import IProfileRepo from '~/modules/profile/repositories/IProfileRepo'
 import IProfileService from '~/modules/profile/services/IProfileService'
@@ -11,6 +11,27 @@ import { handleThrowError } from '~/utils/handle.util'
 export default class ProfileServiceImpl implements IProfileService {
   constructor(private profileRepo: IProfileRepo) {
     this.profileRepo = profileRepo
+  }
+  async findAll(data: GetListInputDTO): Promise<GetProfileOutputDTO[]> {
+    try {
+      const response = await this.profileRepo.findAll(data)
+      const list: GetProfileOutputDTO[] = []
+      for (const profile of response) {
+        list.push(
+          new GetProfileOutputDTO({
+            id: profile.id,
+            fullName: profile.fullName,
+            phoneNumber: profile.phoneNumber,
+            bio: profile.bio,
+            avatarUrl: profile.avatarUrl,
+            coverUrl: profile.coverUrl
+          })
+        )
+      }
+      return list
+    } catch (error) {
+      handleThrowError(error)
+    }
   }
 
   async create(data: CreateProfileInputDTO): Promise<CreateProfileOutputDTO> {

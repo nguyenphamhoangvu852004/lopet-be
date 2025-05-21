@@ -70,4 +70,12 @@ export default class AccountRepoImpl implements IAccountRepo {
     if (!account) return null
     return account
   }
+
+  async delete(data: Accounts): Promise<Accounts | null> {
+    const deletedEntity = await this.accountsRepo.remove(data)
+    if (!deletedEntity) {
+      return null
+    }
+    return deletedEntity
+  }
 }
