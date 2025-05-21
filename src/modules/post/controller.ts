@@ -8,6 +8,7 @@ import cloudinary from '~/config/cloudinary'
 import { logger } from '~/config/logger'
 import { MEDIATYPE } from '~/entities/postMedias.entity'
 import { LikePostInputDTO, UnlikePostInputDTO } from '~/modules/post/dto/React'
+import { GetPostListInputDTO } from '~/modules/post/dto/Get'
 
 export class PostController {
   constructor(private postService: IPostService) {
@@ -15,7 +16,12 @@ export class PostController {
   }
   async getAll(req: Request, res: Response) {
     try {
-      const response = await this.postService.getAll()
+      const content = req.query.content
+      const safeContent = content && content !== 'undefined' ? String(content) : undefined
+      const dto = new GetPostListInputDTO({
+        content: safeContent
+      })
+      const response = await this.postService.getAll(dto)
       sendResponse(
         new ApiResponse({
           data: response,
