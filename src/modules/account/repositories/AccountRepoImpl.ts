@@ -28,17 +28,22 @@ export default class AccountRepoImpl implements IAccountRepo {
     return account
   }
 
-  async create(data: CreateAccountDTO): Promise<Accounts> {
+  async findAll(): Promise<Accounts[]> {
+    return this.accountsRepo.find({
+      relations: {
+        profile: true,
+        sentFriendRequests: true,
+        receivedFriendRequests: true
+      }
+    })
+  }
+  async create(data: Accounts): Promise<Accounts> {
     const createdEntity = await this.accountsRepo.save(data)
     return createdEntity
   }
 
-  async update(data: UpdateAccountDTO): Promise<Accounts | null> {
-    const account = await this.accountsRepo.findOneBy({ id: data.id })
-    if (!account) {
-      return null
-    }
-    const updatedEntity = await this.accountsRepo.save(account)
+  async update(data: Accounts): Promise<Accounts | null> {
+    const updatedEntity = await this.accountsRepo.save(data)
     return updatedEntity
   }
 

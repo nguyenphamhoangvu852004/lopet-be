@@ -1,3 +1,4 @@
+import { Accounts } from '~/entities/accounts.entity'
 import { BanIdOutputDTO } from '~/modules/account/dto/ban'
 import { CreateAccountDTO } from '~/modules/account/dto/Create'
 import { DeleteAccountOutputDTO } from '~/modules/account/dto/Detele'
@@ -8,6 +9,7 @@ export interface IAccountService {
   getById(data: number): Promise<GetAccountOutputDTO>
   getByEmail(data: string): Promise<GetAccountOutputDTO>
   getByUsername(data: string): Promise<GetAccountOutputDTO>
+  getList(): Promise<Accounts[]>
   createAccount(data: CreateAccountDTO): Promise<GetAccountOutputDTO>
   setProfile(accountId: number, profile: CreateProfileOutputDTO): Promise<GetAccountOutputDTO>
   banId(id: number): Promise<BanIdOutputDTO>

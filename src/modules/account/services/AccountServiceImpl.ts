@@ -43,6 +43,13 @@ export class AccountServiceImpl implements IAccountService {
     }
   }
 
+  async getList(): Promise<Accounts[]> {
+    try {
+      return await this.repo.findAll()
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
   async getByEmail(data: string): Promise<GetAccountOutputDTO> {
     try {
       const account = await this.repo.findByEmail(data)
