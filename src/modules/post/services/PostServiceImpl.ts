@@ -10,6 +10,7 @@ import {
   AccountDTO,
   GetPostByAccountIdOutputDTO,
   GetPostDetailOutputDTO,
+  GetPostListInputDTO,
   GetPostOutputDTO
 } from '~/modules/post/dto/Get'
 import { LikePostInputDTO, LikePostOuputDTO, UnlikePostInputDTO, UnlikePostOutputDTO } from '~/modules/post/dto/React'
@@ -71,9 +72,9 @@ export default class PostServiceImpl implements IPostService {
       handleThrowError(error)
     }
   }
-  async getAll(): Promise<GetPostOutputDTO[]> {
+  async getAll(data: GetPostListInputDTO): Promise<GetPostOutputDTO[]> {
     try {
-      const listEntity = await this.postRepo.getAll()
+      const listEntity = await this.postRepo.getAll(data)
       if (!listEntity) throw new NotFound()
       const listOutDto: GetPostOutputDTO[] = []
       for (const item of listEntity) {

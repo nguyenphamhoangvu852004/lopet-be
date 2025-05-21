@@ -1,7 +1,8 @@
-import { log } from 'console'
-import { Repository } from 'typeorm'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ILike, Repository } from 'typeorm'
 import { appDataSource } from '~/config/appDataSource'
 import { Posts } from '~/entities/posts.entity'
+import { GetPostListInputDTO } from '~/modules/post/dto/Get'
 import IPostRepo from '~/modules/post/repositories/IPostRepo'
 
 export default class PostRepoImpl implements IPostRepo {
@@ -10,8 +11,15 @@ export default class PostRepoImpl implements IPostRepo {
   constructor() {
     this.postRepo = appDataSource.getRepository(Posts)
   }
-  async getAll(): Promise<Posts[]> {
-    const list = await this.postRepo.find({
+  async getAll(data: GetPostListInputDTO): Promise<Posts[]> {
+    const { content } = data
+    const whereClause: any = {}
+    if (content) {
+      whereClause.content = ILike(`%${content}%`)
+    }
+    console.log(whereClause)
+    const list: Posts[] = await this.postRepo.find({
+      where: whereClause,
       relations: {
         accounts: true,
         postMedias: true,
@@ -60,7 +68,6 @@ export default class PostRepoImpl implements IPostRepo {
     return list
   }
   async create(data: Posts): Promise<Posts | null> {
-    log(data)
     const post = await this.postRepo.save(data)
     if (!post) {
       return null
