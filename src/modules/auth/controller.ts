@@ -93,12 +93,13 @@ export class AuthController {
           confirmPassword: confirmPassword
         })
       )
+
       sendResponse(
         new ApiResponse({
           res: res,
           data: response,
-          message: httpStatusMessage.CREATED,
-          statusCode: httpStatusCode.CREATED
+          message: httpStatusMessage.OK,
+          statusCode: httpStatusCode.OK
         })
       )
     } catch (error) {
