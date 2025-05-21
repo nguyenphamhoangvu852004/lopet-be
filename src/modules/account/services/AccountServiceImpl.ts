@@ -1,7 +1,9 @@
 import { Accounts } from '~/entities/accounts.entity'
 import { Profiles } from '~/entities/profiles.entity'
 import { BadRequest, NotFound } from '~/error/error.custom'
+import { BanIdOutputDTO } from '~/modules/account/dto/ban'
 import { CreateAccountDTO } from '~/modules/account/dto/Create'
+import { DeleteAccountOutputDTO } from '~/modules/account/dto/Detele'
 import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { IAccountService } from '~/modules/account/services/IAccountService'
@@ -122,6 +124,50 @@ export class AccountServiceImpl implements IAccountService {
         profile: enitty.profile
       })
       return dto
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
+  async banId(id: number): Promise<BanIdOutputDTO> {
+    try {
+      const account = await this.repo.findById(id)
+      if (!account) throw new BadRequest()
+      account.isBanned = 1
+      const response = await this.repo.update(account)
+      if (!response) throw new BadRequest()
+      return new BanIdOutputDTO({
+        id: response.id
+      })
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
+  async unbanId(id: number): Promise<BanIdOutputDTO> {
+    try {
+      const account = await this.repo.findById(id)
+      if (!account) throw new BadRequest()
+      account.isBanned = 0
+      const response = await this.repo.update(account)
+      if (!response) throw new BadRequest()
+      return new BanIdOutputDTO({
+        id: response.id
+      })
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
+  async delete(id: number): Promise<DeleteAccountOutputDTO> {
+    try {
+      const account = await this.repo.findById(id)
+      if (!account) throw new BadRequest()
+      const response = await this.repo.delete(account)
+      if (!response) throw new BadRequest()
+      return new DeleteAccountOutputDTO({
+        id: response.id
+      })
     } catch (error) {
       handleThrowError(error)
     }
