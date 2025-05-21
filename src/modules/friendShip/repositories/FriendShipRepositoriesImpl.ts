@@ -1,4 +1,3 @@
-import { log } from 'console'
 import { Repository } from 'typeorm'
 import { appDataSource } from '~/config/appDataSource'
 import { FriendShips } from '~/entities/friendShips.entity'
@@ -9,9 +8,32 @@ export default class FriendShipRepositoriesImpl implements IFriendShipRepositori
   constructor() {
     this.friendShipRepo = appDataSource.getRepository(FriendShips)
   }
+  async findBySenderAndReceiver(senderId: number, receiverId: number): Promise<FriendShips | null> {
+    const response = await this.friendShipRepo.findOne({
+      where: { sender: { id: senderId }, receiver: { id: receiverId } }
+    })
+    return response
+  }
+
+  async delete(data: FriendShips): Promise<FriendShips | null> {
+    const response = await this.friendShipRepo.remove(data)
+    if (!response) return null
+    return response
+  }
+  async changeStatus(data: FriendShips): Promise<FriendShips | null> {
+    const response = await this.friendShipRepo.save(data)
+    if (!response) return null
+    return response
+  }
+
   async create(data: FriendShips): Promise<FriendShips | null> {
     const response = await this.friendShipRepo.save(data)
     if (!response) return null
+    return response
+  }
+
+  async findAllSendFriendShips(senderId: number): Promise<FriendShips[]> {
+    const response = await this.friendShipRepo.find({ where: { sender: { id: senderId } } })
     return response
   }
 }
