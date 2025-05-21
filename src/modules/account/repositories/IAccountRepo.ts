@@ -6,4 +6,5 @@ export default interface IAccountRepo {
   findByUsername(data: string): Promise<Accounts | null>
   create(data: Accounts): Promise<Accounts>
   update(data: Accounts): Promise<Accounts | null>
+  delete(data: Accounts): Promise<Accounts | null>
 }
