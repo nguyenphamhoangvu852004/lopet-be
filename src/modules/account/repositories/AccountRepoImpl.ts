@@ -3,8 +3,6 @@ import { appDataSource } from '~/config/appDataSource'
 import { logger } from '~/config/logger'
 import { Accounts } from '~/entities/accounts.entity'
 import { Profiles } from '~/entities/profiles.entity'
-import { CreateAccountDTO } from '~/modules/account/dto/Create'
-import { UpdateAccountDTO } from '~/modules/account/dto/Update'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 
 export default class AccountRepoImpl implements IAccountRepo {
