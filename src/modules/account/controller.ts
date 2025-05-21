@@ -28,6 +28,21 @@ export class AccountController {
       return
     }
   }
+  async getList(req: Request, res: Response) {
+    try {
+      const response = await this.service.getList()
+      sendResponse(
+        new ApiResponse({
+          data: response,
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Get list account successfully'
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+    }
+  }
 
   async getByUsername(req: Request, res: Response) {
     try {
