@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { BaseEntity } from '~/entities/base.entity'
+import { FriendShips } from '~/entities/friendShips.entity'
 import { Groups } from '~/entities/groups.entity'
 import { PostLikes } from '~/entities/postLikes.entity'
 import { Posts } from '~/entities/posts.entity'
@@ -53,6 +54,12 @@ export class Accounts extends BaseEntity {
 
   @OneToMany(() => Reports, (report) => report.accounts)
   reports!: Reports[]
+
+  @OneToMany(() => FriendShips, (friendship) => friendship.sender)
+  sentFriendRequests!: FriendShips[]
+
+  @OneToMany(() => FriendShips, (friendship) => friendship.receiver)
+  receivedFriendRequests!: FriendShips[]
 
   constructor(data?: Partial<Accounts>) {
     super()
