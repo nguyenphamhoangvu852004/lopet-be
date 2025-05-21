@@ -7,10 +7,27 @@ import { httpStatusCode } from '~/global/httpStatusCode'
 import cloudinary from '~/config/cloudinary'
 import { logger } from '~/config/logger'
 import { MEDIATYPE } from '~/entities/postMedias.entity'
+import { LikePostInputDTO, UnlikePostInputDTO } from '~/modules/post/dto/React'
 
 export class PostController {
   constructor(private postService: IPostService) {
     this.postService = postService
+  }
+  async getAll(req: Request, res: Response) {
+    try {
+      const response = await this.postService.getAll()
+      sendResponse(
+        new ApiResponse({
+          data: response,
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Get posts successfully'
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+      return
+    }
   }
   async getById(req: Request, res: Response) {
     try {
@@ -26,6 +43,21 @@ export class PostController {
     } catch (error) {
       handleControllerError(error, res)
       return
+    }
+  }
+  async getByAccountId(req: Request, res: Response) {
+    try {
+      const response = await this.postService.getByAccountId(Number(req.params.id))
+      sendResponse(
+        new ApiResponse({
+          data: response,
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: `Get list by account id ${req.params.id} successfully`
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
     }
   }
   async create(req: Request, res: Response) {
@@ -85,6 +117,49 @@ export class PostController {
           res: res,
           statusCode: httpStatusCode.OK,
           message: 'Delete post successfully',
+          data: response
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+      return
+    }
+  }
+  async like(req: Request, res: Response) {
+    try {
+      const { postId, accountId } = req.body
+      const dto = new LikePostInputDTO({
+        accountId: accountId,
+        postId: postId
+      })
+      const response = await this.postService.like(dto)
+      sendResponse(
+        new ApiResponse({
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Like post successfully',
+          data: response
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+      return
+    }
+  }
+
+  async unlike(req: Request, res: Response) {
+    try {
+      const { postId, accountId } = req.body
+      const dto = new UnlikePostInputDTO({
+        accountId: accountId,
+        postId: postId
+      })
+      const response = await this.postService.unLike(dto)
+      sendResponse(
+        new ApiResponse({
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Unlike post successfully',
           data: response
         })
       )
