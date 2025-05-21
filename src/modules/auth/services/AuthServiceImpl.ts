@@ -1,4 +1,3 @@
-import { log } from 'console'
 import { redis } from '~/config/appDataSource'
 import { Accounts } from '~/entities/accounts.entity'
 import { BadRequest, Conflict, NotFound } from '~/error/error.custom'
@@ -75,13 +74,20 @@ export default class AuthServiceImpl implements IAuthService {
 
   async resetPassword(data: ResetPasswordInputDto): Promise<ResetPasswordOutputDto> {
     try {
+      // Validate: password & confirm
+      if (data.password !== data.confirmPassword) {
+        throw new BadRequest('Mật khẩu xác nhận không khớp')
+      }
+
       const account = await this.accountRepo.findByEmail(data.email)
       if (!account) throw new NotFound()
-      if (data.password !== data.confirmPassword) throw new BadRequest()
+
       const hashedPassword = await hashPassword(data.password)
       account.password = hashedPassword
+
       const response = await this.accountRepo.update(account)
       if (!response) throw new BadRequest()
+
       return new ResetPasswordOutputDto({
         id: response.id,
         email: response.email,
