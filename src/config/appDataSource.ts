@@ -2,7 +2,7 @@ import { createClient } from 'redis'
 import { DataSource } from 'typeorm'
 import { environment } from '~/config/env'
 
-export const appDataSource = new DataSource({
+export const mySqlDataSource = new DataSource({
   type: 'mysql',
   host: environment.DATABASE_HOSTNAME,
   port: environment.DATABASE_PORT,
