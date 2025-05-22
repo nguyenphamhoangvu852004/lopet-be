@@ -3,15 +3,24 @@ import DailyRotateFile from 'winston-daily-rotate-file'
 import { environment } from '~/config/env'
 
 const logLevels = {
-  error: 0,
-  warning: 1,
-  info: 2,
-  http: 3,
-  debug: 4
+  levels: {
+    error: 0,
+    warn: 1,
+    info: 2,
+    http: 3,
+    debug: 4
+  },
+  colors: {
+    error: 'red',
+    warn: 'yellow',
+    info: 'green',
+    http: 'magenta',
+    debug: 'blue'
+  }
 }
 
 export const logger = winston.createLogger({
-  levels: logLevels,
+  levels: logLevels.levels,
   level: environment.LOG_LEVEL,
   silent: false,
   format: winston.format.combine(
@@ -21,8 +30,12 @@ export const logger = winston.createLogger({
     winston.format.printf(({ timestamp, level, message, stack, ...logMetadata }) => {
       return ` ${timestamp} ${level}: ${message} ${stack ? stack : ''} ${JSON.stringify(logMetadata)}`
     })
-  )
-  //   transports: [new winston.transports.Console()]
+  ),
+  transports: [
+    new winston.transports.Console()
+    //   new winston.transports.File({ filename: 'logs/combined.log' }),
+    //   new winston.transports.File({ filename: 'logs/http.log', level: 'http' })
+  ]
 })
 
 const fileRountineTransport = new DailyRotateFile({
@@ -34,7 +47,8 @@ const fileRountineTransport = new DailyRotateFile({
   format: winston.format.combine(
     winston.format.errors({ stack: true }),
     winston.format.timestamp(),
-    winston.format.json()
+    // winston.format.json(),
+    winston.format.colorize()
   )
 })
 
