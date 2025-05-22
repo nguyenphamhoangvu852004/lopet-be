@@ -64,7 +64,7 @@ export async function startServer() {
   app.use(express.urlencoded({ extended: true }))
   app.use(
     cors({
-      origin: ['*', 'http://localhost:5173'],
+      origin: [environment.DOMAIN_CORS as string],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
       allowedHeaders: ['Content-Type', 'Authorization']
     })
