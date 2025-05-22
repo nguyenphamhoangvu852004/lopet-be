@@ -3,7 +3,7 @@ import { Request, Response } from 'express'
 import { handleControllerError } from '~/utils/handle.util'
 import { CreateFriendShipInputDTO } from '~/modules/friendShip/dto/Create'
 import { ApiResponse, sendResponse } from '~/response/api.response'
-import { httpStatusCode } from '~/global/httpStatusCode'
+import { httpStatusCode, httpStatusMessage } from '~/global/httpStatusCode'
 import { FRIENDSHIPSTATUS } from '~/entities/friendShips.entity'
 import { ChangeStatusFriendShipInputDTO } from '~/modules/friendShip/dto/ChangeStatusFriend'
 import { DeleteFriendShipInputDTO } from '~/modules/friendShip/dto/Delete'
@@ -11,7 +11,22 @@ export class FriendShipController {
   constructor(private service: IFriendShipService) {
     this.service = service
   }
-
+  async getListFriendShipsOfAccount(req: Request, res: Response) {
+    try {
+      const { id } = req.params
+      const resposne = await this.service.getListFriendShipsOfAccount(Number(id))
+      sendResponse(
+        new ApiResponse({
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: httpStatusMessage.OK,
+          data: resposne
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+    }
+  }
   async getListSendFriendShips(req: Request, res: Response) {
     try {
       const { id } = req.params
