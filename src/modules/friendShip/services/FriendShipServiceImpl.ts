@@ -20,6 +20,38 @@ export class FriendShipServiceImpl implements IFriendShipService {
     this.friendShipRepo = friendShipRepo
     this.accountRepo = accountRepo
   }
+  async getListFriendShipsOfAccount(data: number): Promise<GetFriendShipOutputDTO> {
+    try {
+      const account = await this.accountRepo.findById(data)
+      if (!account) throw new BadRequest()
+      const list = await this.friendShipRepo.findAllFriendOfAccount(data)
+      const listReceiver: Receiver[] = []
+      for (const item of list) {
+        const receiver = await this.accountRepo.findById(item.id)
+        if (!receiver) throw new BadRequest()
+        const receiverDTO = new Receiver({
+          id: receiver.id,
+          username: receiver.username,
+          email: receiver.email,
+          imageUrl: receiver.profile?.avatarUrl ?? '',
+          status: FRIENDSHIPSTATUS.ACCEPTED
+        })
+        listReceiver.push(receiverDTO)
+      }
+      const outputDTO = new GetFriendShipOutputDTO({
+        sender: new Receiver({
+          id: account.id,
+          username: account.username,
+          email: account.email,
+          imageUrl: account.profile?.avatarUrl ?? ''
+        }),
+        receivers: listReceiver
+      })
+      return outputDTO
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
   async getListSendFriendShips(data: number): Promise<GetFriendShipOutputDTO> {
     try {
       const account = await this.accountRepo.findById(data)
@@ -33,6 +65,7 @@ export class FriendShipServiceImpl implements IFriendShipService {
           id: receiver.id,
           username: receiver.username,
           email: receiver.email,
+          imageUrl: receiver.profile?.avatarUrl ?? '',
           status: item.status
         })
         listReceiver.push(receiverDTO)
@@ -42,7 +75,8 @@ export class FriendShipServiceImpl implements IFriendShipService {
         sender: new Receiver({
           id: account.id,
           username: account.username,
-          email: account.email
+          email: account.email,
+          imageUrl: account.profile?.avatarUrl ?? '',
         }),
         receivers: listReceiver
       })

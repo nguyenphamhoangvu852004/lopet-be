@@ -4,7 +4,7 @@ import { sendResponse, ApiResponse } from '~/response/api.response'
 import { Response } from 'express'
 import { logger } from '~/config/logger'
 export function handleThrowError(error: unknown): never {
-  logger.error(`ERROR OCCURRED IN SERVICE: ${error}`)
+  logger.error(`${error}`)
   if (error instanceof HttpError) {
     throw error
   } else {
@@ -13,7 +13,7 @@ export function handleThrowError(error: unknown): never {
 }
 
 export function handleControllerError(error: unknown, res: Response) {
-  logger.error(`ERROR OCCURRED IN CONTROLLER: ${error}`)
+  logger.error(`${error}`)
   if (error instanceof HttpError) {
     sendResponse(
       new ApiResponse({

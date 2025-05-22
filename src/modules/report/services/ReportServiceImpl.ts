@@ -11,7 +11,7 @@ export class ReportServiceImpl implements IReportService {
     try {
     //   const result = await this.reportRepo.create(report)
     //   if (!result) return null
-// #     return new CreateReportOutputDTO(result)
+     return new CreateReportOutputDTO();
     } catch (error) {
       handleThrowError(error)
     }

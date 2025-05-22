@@ -1,3 +1,4 @@
+import { Accounts } from '~/entities/accounts.entity'
 import { FriendShips } from '~/entities/friendShips.entity'
 
 export default interface IFriendShipRepositories {
@@ -6,4 +7,5 @@ export default interface IFriendShipRepositories {
   changeStatus(data: FriendShips): Promise<FriendShips | null>
   findBySenderAndReceiver(senderId: number, receiverId: number): Promise<FriendShips | null>
   findAllSendFriendShips(senderId: number): Promise<FriendShips[]>
+  findAllFriendOfAccount(accountId: number): Promise<Accounts[]>
 }

@@ -10,8 +10,11 @@ const accountRepo = new AccountRepoImpl()
 const service = new FriendShipServiceImpl(friendShipRepo, accountRepo)
 const controller = new FriendShipController(service)
 
-friendShipRouter.get('/:id', controller.getListSendFriendShips.bind(controller))
+// danh sách những người mà accountId đã trở thành bạn bè với người ta (ACCEPTED)
+friendShipRouter.get('/:id', controller.getListFriendShipsOfAccount.bind(controller))
 
+// Lấy danh sách những người mà accountId này đã gữi lời mời kết bạn (PENDING)
+friendShipRouter.get('/send/:id', controller.getListSendFriendShips.bind(controller))
 friendShipRouter.post('/', controller.create.bind(controller))
 friendShipRouter.post('/accept', controller.accept.bind(controller))
 friendShipRouter.post('/reject', controller.reject.bind(controller))
