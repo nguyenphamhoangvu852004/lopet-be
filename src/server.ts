@@ -3,45 +3,63 @@ import core from 'express-serve-static-core'
 import { environment } from 'src/config/env'
 import { createServer } from 'node:http'
 import { Server } from 'socket.io'
-import { appDataSource, redis } from '~/config/appDataSource'
+import { mySqlDataSource, redis } from '~/config/appDataSource'
 import { router } from '~/routes/index'
 import { logger } from '~/config/logger'
-const PORT = environment.APP_PORT
-const HOSTNAME = environment.APP_HOSTNAME
 import cors from 'cors'
 import { testRouter } from '~/routes/test'
+import { morganMiddleware } from '~/config/morgan'
+const PORT = environment.APP_PORT
+const HOSTNAME = environment.APP_HOSTNAME
 
-// DATABASE
-function startDatabase() {
-  appDataSource
-    .initialize()
-    .then(() => logger.info('Database connected succesfully'))
-    .catch((error) => {
-      logger.error((error as Error).message)
-    })
+export const app: core.Express = express()
+export const server = createServer(app)
+export const io = new Server(server, {
+  cors: {
+    origin: ['*', 'http://localhost:5173'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+  }
+})
 
-  redis.on('connect', () => {
-    logger.info('Redis client connected')
-  })
-
-  redis.on('ready', () => {
-    logger.info('Redis client ready')
-  })
-
-  redis.on('error', (err) => {
-    logger.error('Redis client error:', err)
-  })
-
-  redis.on('end', () => {
-    logger.info('Redis client disconnected')
-  })
+const route: core.Router = express.Router()
+export async function startMysql() {
+  try {
+    await mySqlDataSource.initialize()
+    logger.info('Database connected succesfully')
+    return
+  } catch (error) {
+    logger.error((error as Error).message)
+    return
+  }
 }
-
-// APPLICATION
+export async function stopMysql() {
+  try {
+    await mySqlDataSource.destroy()
+    logger.info('Database disconnected successfully')
+    return
+  } catch (error) {
+    logger.error((error as Error).message)
+    return
+  }
+}
+export async function startRedis() {
+  try {
+    await redis.connect()
+    await redis.set('test', 'Hello world')
+    logger.info('Redis connected successfully')
+  } catch (error) {
+    logger.error((error as Error).message)
+  }
+}
+export async function stopRedis() {
+  try {
+    await redis.disconnect()
+    logger.info('Redis disconnected successfully')
+  } catch (error) {
+    logger.error((error as Error).message)
+  }
+}
 export async function startServer() {
-  const app: core.Express = express()
-  const route: core.Router = express.Router()
-  const server = createServer(app)
   app.use(express.json({ strict: true }))
   app.use(express.urlencoded({ extended: true }))
   app.use(
@@ -51,12 +69,7 @@ export async function startServer() {
       allowedHeaders: ['Content-Type', 'Authorization']
     })
   )
-  const io = new Server(server, {
-    cors: {
-      origin: ['*', 'http://localhost:5173'],
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-    }
-  })
+  route.use(morganMiddleware)
   route.use('/test', testRouter)
   route.use('/v1', router)
 
@@ -79,11 +92,35 @@ export async function startServer() {
   })
 
   app.use(route)
-  startDatabase()
 
-  await redis.connect()
-  redis.set('test', 'Hello world')
-  server.listen(PORT, function () {
-    logger.info(`Server started at ${HOSTNAME}:${PORT}`)
+  await new Promise<void>((resolve) => {
+    server.listen(PORT, () => {
+      logger.info(`Server started at ${HOSTNAME}:${PORT}`)
+      resolve()
+    })
+  })
+}
+
+export async function stopServer() {
+  return new Promise<void>((resolve, reject) => {
+    const shutdown = async () => {
+      try {
+        await stopMysql()
+        await stopRedis()
+        server.close((err) => {
+          if (err) {
+            logger.error('Error closing server', err)
+            reject(err)
+            return
+          }
+          logger.info('Server stopped successfully')
+          resolve()
+        })
+      } catch (error) {
+        logger.error((error as Error).message)
+        reject(error)
+      }
+    }
+    shutdown()
   })
 }
