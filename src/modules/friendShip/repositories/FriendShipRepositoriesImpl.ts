@@ -1,4 +1,4 @@
-import { AcceptedFields, Repository } from 'typeorm'
+import { Repository } from 'typeorm'
 import { mySqlDataSource } from '~/config/appDataSource'
 import { Accounts } from '~/entities/accounts.entity'
 import { FriendShips, FRIENDSHIPSTATUS } from '~/entities/friendShips.entity'
@@ -28,6 +28,8 @@ export default class FriendShipRepositoriesImpl implements IFriendShipRepositori
   }
 
   async create(data: FriendShips): Promise<FriendShips | null> {
+    const isEsist = await this.findBySenderAndReceiver(data.sender.id, data.receiver.id)
+    if (isEsist) return null
     const response = await this.friendShipRepo.save(data)
     if (!response) return null
     return response
@@ -60,5 +62,17 @@ export default class FriendShipRepositoriesImpl implements IFriendShipRepositori
     })
     console.log('friends ne', friends)
     return friends
+  }
+  async findAllReceivedFriendRequests(accountId: number): Promise<Accounts[]> {
+    const friendRequests = await this.friendShipRepo
+      .createQueryBuilder('friendship')
+      .leftJoinAndSelect('friendship.sender', 'sender')
+      .where('friendship.receiver = :accountId', { accountId })
+      .andWhere('friendship.status = :status', { status: FRIENDSHIPSTATUS.PENDING })
+      .getMany()
+    // Lấy người gửi (sender) ra
+
+    console.log('Danh sach nhung nguoi la gui loi moi ket ban cho id nay', friendRequests)
+    return friendRequests.map((f) => f.sender)
   }
 }

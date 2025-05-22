@@ -15,6 +15,9 @@ friendShipRouter.get('/:id', controller.getListFriendShipsOfAccount.bind(control
 
 // Lấy danh sách những người mà accountId này đã gữi lời mời kết bạn (PENDING)
 friendShipRouter.get('/send/:id', controller.getListSendFriendShips.bind(controller))
+
+// Lấy danh sách những người gữi lời mời kết bạn đến AccountID này
+friendShipRouter.get('/receive/:id', controller.getListReceiveFriendShips.bind(controller))
 friendShipRouter.post('/', controller.create.bind(controller))
 friendShipRouter.post('/accept', controller.accept.bind(controller))
 friendShipRouter.post('/reject', controller.reject.bind(controller))

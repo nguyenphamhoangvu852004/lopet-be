@@ -11,16 +11,16 @@ export class FriendShipController {
   constructor(private service: IFriendShipService) {
     this.service = service
   }
-  async getListFriendShipsOfAccount(req: Request, res: Response) {
+  async getListReceiveFriendShips(req: Request, res: Response) {
     try {
       const { id } = req.params
-      const resposne = await this.service.getListFriendShipsOfAccount(Number(id))
+      const response = await this.service.getListReceiveFriendShips(Number(id))
       sendResponse(
         new ApiResponse({
+          data: response,
           res: res,
           statusCode: httpStatusCode.OK,
-          message: httpStatusMessage.OK,
-          data: resposne
+          message: 'Get list send friend ship successfully'
         })
       )
     } catch (error) {
@@ -37,6 +37,23 @@ export class FriendShipController {
           res: res,
           statusCode: httpStatusCode.OK,
           message: 'Get list send friend ship successfully'
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+    }
+  }
+
+  async getListFriendShipsOfAccount(req: Request, res: Response) {
+    try {
+      const { id } = req.params
+      const resposne = await this.service.getListFriendShipsOfAccount(Number(id))
+      sendResponse(
+        new ApiResponse({
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: httpStatusMessage.OK,
+          data: resposne
         })
       )
     } catch (error) {

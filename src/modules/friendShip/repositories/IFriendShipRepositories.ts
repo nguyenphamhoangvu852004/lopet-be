@@ -8,4 +8,5 @@ export default interface IFriendShipRepositories {
   findBySenderAndReceiver(senderId: number, receiverId: number): Promise<FriendShips | null>
   findAllSendFriendShips(senderId: number): Promise<FriendShips[]>
   findAllFriendOfAccount(accountId: number): Promise<Accounts[]>
+  findAllReceivedFriendRequests(accountId: number): Promise<Accounts[]>
 }

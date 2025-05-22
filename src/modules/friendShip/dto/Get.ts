@@ -1,6 +1,6 @@
 export class GetFriendShipOutputDTO {
-  sender!: Sender
-  receivers!: Receiver[]
+  me!: Sender
+  others!: Receiver[]
   constructor(data?: Partial<GetFriendShipOutputDTO>) {
     Object.assign(this, data)
   }
