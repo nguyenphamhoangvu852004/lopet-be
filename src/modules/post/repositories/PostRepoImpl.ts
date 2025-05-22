@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ILike, Repository } from 'typeorm'
-import { appDataSource } from '~/config/appDataSource'
+import { mySqlDataSource } from '~/config/appDataSource'
 import { Posts } from '~/entities/posts.entity'
 import { GetPostListInputDTO } from '~/modules/post/dto/Get'
 import IPostRepo from '~/modules/post/repositories/IPostRepo'
@@ -9,7 +9,7 @@ export default class PostRepoImpl implements IPostRepo {
   private postRepo: Repository<Posts>
 
   constructor() {
-    this.postRepo = appDataSource.getRepository(Posts)
+    this.postRepo = mySqlDataSource.getRepository(Posts)
   }
   async getAll(data: GetPostListInputDTO): Promise<Posts[]> {
     const { content } = data

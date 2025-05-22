@@ -1,5 +1,5 @@
 import { ILike, Repository } from 'typeorm'
-import { appDataSource } from '~/config/appDataSource'
+import { mySqlDataSource } from '~/config/appDataSource'
 import { logger } from '~/config/logger'
 import { Accounts } from '~/entities/accounts.entity'
 import { Profiles } from '~/entities/profiles.entity'
@@ -10,8 +10,8 @@ export default class ProfileRepoImpl implements IProfileRepo {
   private profileRepo: Repository<Profiles>
   private accountRepo: Repository<Accounts>
   constructor() {
-    this.profileRepo = appDataSource.getRepository(Profiles)
-    this.accountRepo = appDataSource.getRepository(Accounts)
+    this.profileRepo = mySqlDataSource.getRepository(Profiles)
+    this.accountRepo = mySqlDataSource.getRepository(Accounts)
   }
   findListByFullName(data: string): Promise<Profiles[]> {
     const fullName = ILike(`%${data}%`)

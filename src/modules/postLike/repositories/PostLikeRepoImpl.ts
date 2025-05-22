@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm'
-import { appDataSource } from '~/config/appDataSource'
+import { mySqlDataSource } from '~/config/appDataSource'
 import { PostLikes } from '~/entities/postLikes.entity'
 import IPostLikeRepo from '~/modules/postLike/repositories/IPostLikeRepo'
 
@@ -7,7 +7,7 @@ export default class PostLikeRepoImpl implements IPostLikeRepo {
   private postLikeRepo: Repository<PostLikes>
 
   constructor() {
-    this.postLikeRepo = appDataSource.getRepository(PostLikes)
+    this.postLikeRepo = mySqlDataSource.getRepository(PostLikes)
   }
   async create(data: PostLikes): Promise<PostLikes | null> {
     const response = await this.postLikeRepo.save(data)

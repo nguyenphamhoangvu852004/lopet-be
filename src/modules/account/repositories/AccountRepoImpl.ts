@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm'
-import { appDataSource } from '~/config/appDataSource'
+import { mySqlDataSource } from '~/config/appDataSource'
 import { logger } from '~/config/logger'
 import { Accounts } from '~/entities/accounts.entity'
 import { Profiles } from '~/entities/profiles.entity'
@@ -9,8 +9,8 @@ export default class AccountRepoImpl implements IAccountRepo {
   private accountsRepo: Repository<Accounts>
   private profileRepo: Repository<Profiles>
   constructor() {
-    this.accountsRepo = appDataSource.getRepository(Accounts)
-    this.profileRepo = appDataSource.getRepository(Profiles)
+    this.accountsRepo = mySqlDataSource.getRepository(Accounts)
+    this.profileRepo = mySqlDataSource.getRepository(Profiles)
   }
   async findById(id: number): Promise<Accounts | null> {
     const account = await this.accountsRepo.findOne({

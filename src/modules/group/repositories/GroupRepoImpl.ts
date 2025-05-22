@@ -1,12 +1,12 @@
 import { Repository } from 'typeorm'
-import { appDataSource } from '~/config/appDataSource'
+import { mySqlDataSource } from '~/config/appDataSource'
 import { Groups } from '~/entities/groups.entity'
 import IGroupRepo from '~/modules/group/repositories/IGroupRepo'
 
 export default class GroupRepoImpl implements IGroupRepo {
   private groupRepo: Repository<Groups>
   constructor() {
-    this.groupRepo = appDataSource.getRepository(Groups)
+    this.groupRepo = mySqlDataSource.getRepository(Groups)
   }
   async create(data: Groups): Promise<Groups | null> {
     const response = await this.groupRepo.save(data)

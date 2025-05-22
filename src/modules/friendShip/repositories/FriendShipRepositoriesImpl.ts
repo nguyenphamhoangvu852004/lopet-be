@@ -1,12 +1,12 @@
 import { Repository } from 'typeorm'
-import { appDataSource } from '~/config/appDataSource'
-import { FriendShips } from '~/entities/friendShips.entity'
+import { mySqlDataSource } from '~/config/appDataSource'
+import { FriendShips, FRIENDSHIPSTATUS } from '~/entities/friendShips.entity'
 import IFriendShipRepositories from '~/modules/friendShip/repositories/IFriendShipRepositories'
 
 export default class FriendShipRepositoriesImpl implements IFriendShipRepositories {
   private friendShipRepo: Repository<FriendShips>
   constructor() {
-    this.friendShipRepo = appDataSource.getRepository(FriendShips)
+    this.friendShipRepo = mySqlDataSource.getRepository(FriendShips)
   }
   async findBySenderAndReceiver(senderId: number, receiverId: number): Promise<FriendShips | null> {
     const response = await this.friendShipRepo.findOne({
@@ -34,6 +34,17 @@ export default class FriendShipRepositoriesImpl implements IFriendShipRepositori
 
   async findAllSendFriendShips(senderId: number): Promise<FriendShips[]> {
     const response = await this.friendShipRepo.find({ where: { sender: { id: senderId } } })
+    return response
+  }
+
+  async findAllFriendOfAccount(accountId: number): Promise<FriendShips[]> {
+    const response = await this.friendShipRepo.find({
+      where: [
+        { sender: { id: accountId }, status: FRIENDSHIPSTATUS.ACCEPTED },
+        { receiver: { id: accountId }, status: FRIENDSHIPSTATUS.ACCEPTED }
+      ],
+      relations: ['sender', 'receiver']
+    })
     return response
   }
 }
