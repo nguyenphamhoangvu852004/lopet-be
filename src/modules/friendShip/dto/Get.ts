@@ -19,6 +19,7 @@ export class Receiver {
   id!: number
   username!: string
   email!: string
+  imageUrl!: string
   status!: string
   constructor(data?: Partial<Receiver>) {
     Object.assign(this, data)
