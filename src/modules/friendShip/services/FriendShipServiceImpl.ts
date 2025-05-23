@@ -174,15 +174,20 @@ export class FriendShipServiceImpl implements IFriendShipService {
       if (!sender) throw new BadRequest()
       const receiver = await this.accountRepo.findById(receiverId)
       if (!receiver) throw new BadRequest()
-      const entity = await this.friendShipRepo.findBySenderAndReceiver(senderId, receiverId)
-      if (!entity) throw new BadRequest()
-      const response = await this.friendShipRepo.delete(entity)
-      if (!response) throw new BadRequest()
-      return new DeleteFriendShipOutputDTO({
-        senderId: response.sender.id,
-        receiverId: response.receiver.id,
-        isSuccess: true
-      })
+      const entity1 = await this.friendShipRepo.findBySenderAndReceiver(senderId, receiverId)
+      if (!entity1) {
+        const entity2 = await this.friendShipRepo.findBySenderAndReceiver(receiverId, senderId)
+
+        if (!entity2) throw new BadRequest()
+
+        const response = await this.friendShipRepo.delete(entity1 ?? entity2)
+        if (!response) throw new BadRequest()
+        return new DeleteFriendShipOutputDTO({
+          senderId: response.sender.id,
+          receiverId: response.receiver.id,
+          isSuccess: true
+        })
+      }
     } catch (error) {
       handleThrowError(error)
     }
