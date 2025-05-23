@@ -85,7 +85,7 @@ export default class AccountRepoImpl implements IAccountRepo {
     return deletedEntity
   }
 
-  async getSuggest(currentAccountId: number): Promise<Accounts[]> {
+  async getSuggest(currentAccountId: number,limit: number): Promise<Accounts[]> {
     // Lấy cái account ra
     const accounts = await this.accountsRepo.findOne({
       where: { id: currentAccountId }
@@ -121,7 +121,7 @@ export default class AccountRepoImpl implements IAccountRepo {
         excludeIds: excludeIds.length > 0 ? excludeIds : [0] // Tránh lỗi empty array
       })
       .andWhere('account.isBanned = 0') // Loại bỏ account bị ban
-      .limit(5)
+      .limit(limit)
       .orderBy('RAND()')
       .getMany()
 
