@@ -2,15 +2,18 @@ import { Repository } from 'typeorm'
 import { mySqlDataSource } from '~/config/appDataSource'
 import { logger } from '~/config/logger'
 import { Accounts } from '~/entities/accounts.entity'
+import { FriendShips, FRIENDSHIPSTATUS } from '~/entities/friendShips.entity'
 import { Profiles } from '~/entities/profiles.entity'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 
 export default class AccountRepoImpl implements IAccountRepo {
   private accountsRepo: Repository<Accounts>
   private profileRepo: Repository<Profiles>
+  private friendShipRepo: Repository<FriendShips>
   constructor() {
     this.accountsRepo = mySqlDataSource.getRepository(Accounts)
     this.profileRepo = mySqlDataSource.getRepository(Profiles)
+    this.friendShipRepo = mySqlDataSource.getRepository(FriendShips)
   }
   async findById(id: number): Promise<Accounts | null> {
     const account = await this.accountsRepo.findOne({
@@ -80,5 +83,48 @@ export default class AccountRepoImpl implements IAccountRepo {
       return null
     }
     return deletedEntity
+  }
+
+  async getSuggest(currentAccountId: number): Promise<Accounts[]> {
+    // Lấy cái account ra
+    const accounts = await this.accountsRepo.findOne({
+      where: { id: currentAccountId }
+    })
+
+    if (!accounts) {
+      return []
+    }
+
+    // Tìm tất cả các mối quan hệ friendship (bất kể status gì)
+    // mà currentAccount có liên quan (là sender hoặc receiver)
+    const friendShips = await this.friendShipRepo.find({
+      where: [{ sender: { id: currentAccountId } }, { receiver: { id: currentAccountId } }]
+    })
+
+    // Lấy danh sách ID của những người đã có quan hệ
+    const excludeIds: number[] = []
+    friendShips.forEach((friendship) => {
+      if (friendship.sender.id === currentAccountId) {
+        excludeIds.push(friendship.receiver.id)
+      } else {
+        excludeIds.push(friendship.sender.id)
+      }
+    })
+
+    // Thêm chính currentAccountId vào danh sách loại bỏ
+    excludeIds.push(currentAccountId)
+
+    // Tìm những account không nằm trong danh sách excludeIds
+    const suggestedAccounts = await this.accountsRepo
+      .createQueryBuilder('account')
+      .where('account.id NOT IN (:...excludeIds)', {
+        excludeIds: excludeIds.length > 0 ? excludeIds : [0] // Tránh lỗi empty array
+      })
+      .andWhere('account.isBanned = 0') // Loại bỏ account bị ban
+      .limit(5)
+      .orderBy('RAND()')
+      .getMany()
+
+    return suggestedAccounts
   }
 }

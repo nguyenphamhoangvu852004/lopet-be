@@ -9,6 +9,7 @@ export interface IAccountService {
   getById(data: number): Promise<GetAccountOutputDTO>
   getByEmail(data: string): Promise<GetAccountOutputDTO>
   getByUsername(data: string): Promise<GetAccountOutputDTO>
+  getSuggest(id: number): Promise<Accounts[]>
   getList(): Promise<Accounts[]>
   createAccount(data: CreateAccountDTO): Promise<GetAccountOutputDTO>
   setProfile(accountId: number, profile: CreateProfileOutputDTO): Promise<GetAccountOutputDTO>

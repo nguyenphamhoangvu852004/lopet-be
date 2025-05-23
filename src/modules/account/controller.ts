@@ -107,4 +107,20 @@ export class AccountController {
       handleControllerError(error, res)
     }
   }
+  async getSuggest(req: Request, res: Response) {
+    try {
+      const { id } = req.params
+      const response = await this.service.getSuggest(Number(id))
+      sendResponse(
+        new ApiResponse({
+          data: response,
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Get suggest account successfully'
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+    }
+  }
 }
