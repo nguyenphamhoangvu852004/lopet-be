@@ -33,3 +33,9 @@ export const profileValidation = Joi.object({
     .trim()
     .strict()
 })
+
+export const advertisementValidation = Joi.object({
+  title: Joi.string().required(),
+  accountId: Joi.number().required(),
+  content: Joi.string().required()
+})
