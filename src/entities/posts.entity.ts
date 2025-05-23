@@ -2,6 +2,7 @@ import 'reflect-metadata'
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { Accounts } from '~/entities/accounts.entity'
 import { BaseEntity } from '~/entities/base.entity'
+import { Comments } from '~/entities/comments.entity'
 import { Groups } from '~/entities/groups.entity'
 import { PostLikes } from '~/entities/postLikes.entity'
 import { PostMedias } from '~/entities/postMedias.entity'
@@ -41,6 +42,9 @@ export class Posts extends BaseEntity {
 
   @OneToMany(() => PostLikes, (postLikes) => postLikes.post, { cascade: true, nullable: true })
   postLikes!: PostLikes[]
+
+  @OneToMany(() => Comments, (comment) => comment.post, { cascade: true })
+  public comments!: Comments[]
 
   constructor(data?: Partial<Posts>) {
     super()

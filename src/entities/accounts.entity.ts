@@ -2,6 +2,7 @@ import 'reflect-metadata'
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Advertisements } from '~/entities/advertisements.entity'
 import { BaseEntity } from '~/entities/base.entity'
+import { Comments } from '~/entities/comments.entity'
 import { FriendShips } from '~/entities/friendShips.entity'
 import { Groups } from '~/entities/groups.entity'
 import { PostLikes } from '~/entities/postLikes.entity'
@@ -65,6 +66,8 @@ export class Accounts extends BaseEntity {
   @OneToMany(() => Advertisements, (advertisements) => advertisements.account)
   advertisements!: Advertisements[]
 
+  @OneToMany(() => Comments, (comment) => comment.account)
+  comments!: Comments[]
   constructor(data?: Partial<Accounts>) {
     super()
     Object.assign(this, data)
