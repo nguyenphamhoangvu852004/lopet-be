@@ -15,4 +15,7 @@ const skip = () => {
 }
 
 // Tạo middleware morgan sử dụng custom stream
-export const morganMiddleware = morgan(':method :url :status :res[content-length] - :response-time ms :remote-addr :user-agent', { stream, skip })
+export const morganMiddleware = morgan(
+  ':method :url :status :res[content-length] - :response-time ms :remote-addr :user-agent',
+  { stream, skip }
+)
