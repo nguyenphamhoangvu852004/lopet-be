@@ -41,6 +41,21 @@ export class CommentController {
     }
   }
   async getCommentAllFromPost(req: Request, res: Response) {
-    
+    try {
+      const { postId } = req.params
+      console.log(postId)
+      const response = await this.commentService.getCommentAllFromPost(Number(postId))
+      sendResponse(
+        new ApiResponse({
+          data: response,
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Get comment successfully'
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+      return
+    }
   }
 }
