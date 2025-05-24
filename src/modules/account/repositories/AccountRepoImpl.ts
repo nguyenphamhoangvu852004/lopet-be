@@ -2,7 +2,7 @@ import { Repository } from 'typeorm'
 import { mySqlDataSource } from '~/config/appDataSource'
 import { logger } from '~/config/logger'
 import { Accounts } from '~/entities/accounts.entity'
-import { FriendShips, FRIENDSHIPSTATUS } from '~/entities/friendShips.entity'
+import { FriendShips } from '~/entities/friendShips.entity'
 import { Profiles } from '~/entities/profiles.entity'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 
@@ -34,7 +34,8 @@ export default class AccountRepoImpl implements IAccountRepo {
       relations: {
         profile: true,
         sentFriendRequests: true,
-        receivedFriendRequests: true
+        receivedFriendRequests: true,
+        roles: true
       }
     })
   }
@@ -54,7 +55,8 @@ export default class AccountRepoImpl implements IAccountRepo {
         email: email
       },
       relations: {
-        profile: true
+        profile: true,
+        roles: true
       }
     })
     logger.error('account', account)
@@ -70,7 +72,8 @@ export default class AccountRepoImpl implements IAccountRepo {
         username: data
       },
       relations: {
-        profile: true
+        profile: true,
+        roles: true
       }
     })
     if (!account) return null
@@ -85,10 +88,14 @@ export default class AccountRepoImpl implements IAccountRepo {
     return deletedEntity
   }
 
-  async getSuggest(currentAccountId: number,limit: number): Promise<Accounts[]> {
+  async getSuggest(currentAccountId: number, limit: number): Promise<Accounts[]> {
     // Lấy cái account ra
     const accounts = await this.accountsRepo.findOne({
-      where: { id: currentAccountId }
+      where: { id: currentAccountId },
+      relations: {
+        profile: true,
+        roles: true
+      }
     })
 
     if (!accounts) {
