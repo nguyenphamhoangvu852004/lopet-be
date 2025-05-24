@@ -1,7 +1,9 @@
+import { REPORTTYPE } from '~/entities/reports.entity'
+
 export class CreateReportInputDTO {
   accountId!: number
   targetId!: number
-  type!: string
+  type!: REPORTTYPE
   reason!: string
   constructor(data?: Partial<CreateReportInputDTO>) {
     Object.assign(this, data)
