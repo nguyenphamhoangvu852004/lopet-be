@@ -1,4 +1,3 @@
-import { logger } from '~/config/logger'
 import { httpStatusCode, httpStatusMessage } from '~/global/httpStatusCode'
 export class HttpError extends Error {
   code: number
@@ -6,8 +5,6 @@ export class HttpError extends Error {
   constructor(code: number, message: string) {
     super(message)
     this.code = code
-    this.name = new.target.name
-    logger.error(message)
   }
 }
 
