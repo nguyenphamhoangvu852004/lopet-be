@@ -42,7 +42,8 @@ export default class PostRepoImpl implements IPostRepo {
         accounts: true,
         postMedias: true,
         group: true,
-        postLikes: true
+        postLikes: true,
+        comments: true
       }
     })
     if (!post) {
