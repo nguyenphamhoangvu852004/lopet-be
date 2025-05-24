@@ -14,12 +14,6 @@ const HOSTNAME = environment.APP_HOSTNAME
 
 export const app: core.Express = express()
 export const server = createServer(app)
-export const io = new Server(server, {
-  cors: {
-    origin: ['*', 'http://localhost:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-  }
-})
 
 const route: core.Router = express.Router()
 export async function startMysql() {
@@ -44,11 +38,13 @@ export async function stopMysql() {
 }
 export async function startRedis() {
   try {
-    await redis.connect()
+    const result = await redis.connect()
+    if (result) {
+      logger.info('Redis connected successfully')
+    }
     await redis.set('test', 'Hello world')
-    logger.info('Redis connected successfully')
   } catch (error) {
-    logger.error((error as Error).message)
+    logger.error('Redis connected error ', (error as Error).message)
   }
 }
 export async function stopRedis() {
@@ -64,14 +60,21 @@ export async function startServer() {
   app.use(express.urlencoded({ extended: true }))
   app.use(
     cors({
-      origin: [environment.DOMAIN_CORS as string],
+      origin: '*',
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-      allowedHeaders: ['Content-Type', 'Authorization']
+      allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin']
     })
   )
   route.use(morganMiddleware)
   route.use('/test', testRouter)
   route.use('/v1', router)
+
+  const io = new Server(server, {
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+    }
+  })
 
   io.on('connection', function (socket) {
     console.log('a user connected', socket.id)
@@ -94,13 +97,12 @@ export async function startServer() {
   app.use(route)
 
   await new Promise<void>((resolve) => {
-    server.listen(PORT, () => {
+    server.listen(PORT, async () => {
       logger.info(`Server started at ${HOSTNAME}:${PORT}`)
       resolve()
     })
   })
 }
-
 export async function stopServer() {
   return new Promise<void>((resolve, reject) => {
     const shutdown = async () => {
