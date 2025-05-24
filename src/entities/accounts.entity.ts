@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { JoinTable, Column, Entity, JoinColumn, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Advertisements } from '~/entities/advertisements.entity'
 import { BaseEntity } from '~/entities/base.entity'
 import { Comments } from '~/entities/comments.entity'
@@ -47,9 +47,19 @@ export class Accounts extends BaseEntity {
   @OneToMany(() => Posts, (post) => post.accounts, { nullable: true })
   posts!: Posts[]
 
-  @ManyToOne(() => Roles, (role) => role.accounts, { nullable: true })
-  @JoinColumn({ name: 'role_id' })
-  role!: Roles
+  @ManyToMany(() => Roles, (role) => role.accounts)
+  @JoinTable({
+    name: 'account_role', // tên bảng join
+    joinColumn: {
+      name: 'account_id', // field trong account_role map tới Account
+      referencedColumnName: 'id'
+    },
+    inverseJoinColumn: {
+      name: 'role_id', // field trong account_role map tới Role
+      referencedColumnName: 'id'
+    }
+  })
+  roles!: Roles[]
 
   @OneToMany(() => PostLikes, (postlikes) => postlikes.account)
   postlikes!: PostLikes[]

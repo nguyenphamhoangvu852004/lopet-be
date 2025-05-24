@@ -1,15 +1,14 @@
 import 'reflect-metadata'
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm'
 import { Accounts } from '~/entities/accounts.entity'
 import { BaseEntity } from '~/entities/base.entity'
 
 export enum ROLENAME {
   ADMIN = 'ADMIN',
-  USER = 'USER',
   ADS = 'ADS'
 }
 
-@Entity({ name: 'roles' })
+@Entity('roles')
 export class Roles extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number
@@ -20,7 +19,7 @@ export class Roles extends BaseEntity {
   })
   name!: ROLENAME
 
-  @OneToMany(() => Accounts, (account) => account.role, { nullable: true, onDelete: 'CASCADE' })
+  @OneToMany(() => Accounts, (account) => account.roles, { nullable: true, onDelete: 'CASCADE' })
   accounts!: Accounts[]
 
   constructor(data?: Partial<Roles>) {
