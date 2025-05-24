@@ -9,6 +9,8 @@ import { groupRouter } from '~/routes/v1/group.route'
 import { messageRouter } from '~/routes/v1/message.route'
 import { postRouter } from '~/routes/v1/post.route'
 import { profileRouter } from '~/routes/v1/profile.route'
+import { reportRouter } from '~/routes/v1/report.route'
+import { roleRouter } from '~/routes/v1/role.route'
 
 export const router = Router()
 router.use('/messages', messageRouter)
@@ -22,3 +24,5 @@ router.use('/posts', postRouter)
 router.use('/friendships', friendShipRouter)
 router.use('/advertisements', advertisementRouter)
 router.use('/comments', commentRouter)
+router.use('/reports', reportRouter)
+router.use('/roles', roleRouter)
