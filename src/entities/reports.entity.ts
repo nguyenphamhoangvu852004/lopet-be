@@ -14,6 +14,7 @@ export enum REPORTTYPE {
   GROUP = 'GROUP',
   POST = 'POST'
 }
+
 @Entity({ name: 'reports' })
 export class Reports extends BaseEntity {
   @PrimaryGeneratedColumn()
@@ -34,6 +35,12 @@ export class Reports extends BaseEntity {
     nullable: false
   })
   type!: REPORTTYPE
+
+  @Column({
+    type: 'tinyint',
+    nullable: false
+  })
+  targetId!: number
 
   @Column({
     type: 'enum',
