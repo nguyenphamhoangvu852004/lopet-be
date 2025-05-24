@@ -14,4 +14,4 @@ const controller = new CommentController(service)
 export const commentRouter = Router()
 
 commentRouter.post('/', upload.single('image'), controller.create.bind(controller))
-commentRouter.post('/:postId', controller.getCommentAllFromPost.bind(controller))
+commentRouter.get('/:postId', controller.getCommentAllFromPost.bind(controller))
