@@ -1,4 +1,4 @@
-import { GetAccountOutputDTO } from "~/modules/account/dto/Get"
+import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 
 export class GetCommentOutputDTO {
   postId!: number
@@ -11,7 +11,8 @@ export class GetCommentOutputDTO {
 
 export class CommentOutputDTO {
   id!: number
-  account!:GetAccountOutputDTO 
+  account!: GetAccountOutputDTO
+  replyToCommentId?: number
   content!: string
   imageUrl!: string
   createdAt!: Date

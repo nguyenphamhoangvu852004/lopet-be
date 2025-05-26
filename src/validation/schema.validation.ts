@@ -31,7 +31,9 @@ export const profileValidation = Joi.object({
     // .pattern(/^[\p{L}\p{N}\p{P}\p{Zs}]+$/u)
     .required()
     .trim()
-    .strict()
+    .strict(),
+  phoneNumber: Joi.string().required().trim().strict(),
+  bio: Joi.string().required().trim().strict()
 })
 
 export const advertisementValidation = Joi.object({

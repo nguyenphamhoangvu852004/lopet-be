@@ -62,7 +62,13 @@ export async function startServer() {
     cors({
       origin: '*',
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin']
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'Access-Control-Allow-Origin',
+        'Access-Control-Allow-Headers',
+        'Access-Control-Allow-Methods'
+      ]
     })
   )
   route.use(morganMiddleware)
@@ -85,6 +91,15 @@ export async function startServer() {
     socket.on('join room', function (room) {
       socket.join(room)
       console.log(`${socket.id} has joined room ${room}`)
+    })
+
+    socket.on('message', (data) => {
+      console.log(`Message from ${socket.id} to room ${data.room}: ${data.message}`)
+      io.to(data.room).emit('message', {
+        from: socket.id,
+        message: data.message
+      })
+      socket.to(``).emit('receive message', data.message)
     })
 
     socket.on('private message', function (data) {

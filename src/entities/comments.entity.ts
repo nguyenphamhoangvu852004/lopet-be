@@ -12,12 +12,6 @@ export class Comments extends BaseEntity {
   @Column({ type: 'text' })
   text!: string
 
-  // @Column({ type: 'int', unsigned: true })
-  // lft!: number
-
-  // @Column({ type: 'int', unsigned: true })
-  // rgt!: number
-
   @ManyToOne(() => Comments, (comment) => comment.replies, {
     onDelete: 'CASCADE', // Khi comment cha bị xoá, comment con cũng bị xoá
     nullable: true

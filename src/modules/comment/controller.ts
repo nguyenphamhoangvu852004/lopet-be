@@ -9,9 +9,27 @@ export class CommentController {
   constructor(private commentService: ICommentService) {
     this.commentService = commentService
   }
+  async delete(req: Request, res: Response) {
+    try {
+      const { commentId } = req.params
+      const response = await this.commentService.delete(Number(commentId))
+      sendResponse(
+        new ApiResponse({
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Deleted comment successfully',
+          data: response
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+      return
+    }
+  }
   async create(req: Request, res: Response) {
     try {
       const { accountId, content, replyCommentId, postId } = req.body
+      console.log(req.body)
       let imageUrl = ''
       if (req.file) {
         const rs = await cloudinary.uploader.upload(req.file.path, { resource_type: 'image' })
@@ -21,7 +39,8 @@ export class CommentController {
         accountId: accountId,
         content: content,
         imageUrl: imageUrl,
-        replyCommentId: replyCommentId ?? null,
+        // eslint-disable-next-line no-constant-binary-expression
+        replyCommentId: Number(replyCommentId) ?? null,
         postId: postId
       })
       const response = await this.commentService.create(dto)

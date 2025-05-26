@@ -1,7 +1,7 @@
 export class CreateCommentInputDTO {
   accountId!: number
   content!: string
-  imageUrl!: string 
+  imageUrl!: string
   replyCommentId!: number | null
   postId!: number
 
