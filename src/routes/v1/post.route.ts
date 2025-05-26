@@ -18,6 +18,7 @@ const postLikesRepo = new PostLikeRepoImpl()
 const service = new PostServiceImpl(postRepo, accountRepo, groupRepo, postMediaRepo, postLikesRepo)
 const controller = new PostController(service)
 
+postRouter.get('/suggest', controller.getSuggestList.bind(controller))
 postRouter.get('/', controller.getAll.bind(controller))
 postRouter.get('/:id', controller.getById.bind(controller))
 postRouter.get('/accounts/:id', controller.getByAccountId.bind(controller))

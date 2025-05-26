@@ -1,6 +1,6 @@
 import { PostLikes } from '~/entities/postLikes.entity'
 import { MEDIATYPE, PostMedias } from '~/entities/postMedias.entity'
-import { Posts } from '~/entities/posts.entity'
+import { Posts, POSTSCOPE } from '~/entities/posts.entity'
 import { BadRequest, NotFound } from '~/error/error.custom'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import IGroupRepo from '~/modules/group/repositories/IGroupRepo'
@@ -33,6 +33,44 @@ export default class PostServiceImpl implements IPostService {
     this.groupRepo = groupRepo
     this.postMediaRepo = postMediaRepo
     this.postLikesRepo = postLikesRepo
+  }
+  async getSuggestList(): Promise<GetPostOutputDTO[]> {
+    try {
+      const listEntity = await this.postRepo.getSuggestList()
+      if (!listEntity) throw new NotFound()
+      const listOutDto: GetPostOutputDTO[] = []
+      for (const item of listEntity) {
+        console.log(item)
+        const dto = new GetPostOutputDTO({
+          accountId: item.accounts.id,
+          content: item.content,
+          groupId: item.group?.id ?? null,
+          postId: item.id,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt ?? null,
+          postType: item.postType,
+          likeAmount: item.postLikes.length,
+          postMedias: []
+        })
+
+        if (!dto.postMedias) {
+          dto.postMedias = []
+        }
+        for (const i of item.postMedias) {
+          const postMedia = new PostMediaInputDTO({
+            mediaUrl: i.mediaUrl,
+            mediaType: i.mediaType,
+            createdAt: i.createdAt,
+            updatedAt: i.updatedAt ?? null
+          })
+          dto.postMedias.push(postMedia)
+        }
+        listOutDto.push(dto)
+      }
+      return listOutDto
+    } catch (error) {
+      handleThrowError(error)
+    }
   }
   async getByAccountId(id: number): Promise<GetPostByAccountIdOutputDTO[]> {
     try {
@@ -174,8 +212,18 @@ export default class PostServiceImpl implements IPostService {
           newPostEntity.group = group
         }
       }
-
       newPostEntity.setType()
+
+      if (data.scope == 'PUBLIC') {
+        newPostEntity.postScope = POSTSCOPE.PUBLIC
+      }
+      if (data.scope == 'FRIEND') {
+        newPostEntity.postScope = POSTSCOPE.FRIEND
+      }
+      if (data.scope == 'PRIVATE') {
+        newPostEntity.postScope = POSTSCOPE.PRIVATE
+      }
+
       const response: Posts | null = await this.postRepo.create(newPostEntity)
 
       if (!response) throw new BadRequest()
@@ -186,6 +234,7 @@ export default class PostServiceImpl implements IPostService {
         content: response.content,
         postId: response.id,
         postType: response.postType,
+        scope: response.postScope,
         groupId: response.group ? response.group.id : null,
         updatedAt: new Date(),
         createdAt: new Date(),

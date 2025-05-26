@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { log } from 'console'
 import { ILike, Repository } from 'typeorm'
 import { mySqlDataSource } from '~/config/appDataSource'
 import { Posts } from '~/entities/posts.entity'
@@ -10,6 +11,25 @@ export default class PostRepoImpl implements IPostRepo {
 
   constructor() {
     this.postRepo = mySqlDataSource.getRepository(Posts)
+  }
+  async getSuggestList(): Promise<Posts[]> {
+    const list: Posts[] = await this.postRepo.find({
+      relations: {
+        accounts: true,
+        postMedias: true,
+        group: true,
+        postLikes: {
+          account: true,
+          post: true
+        }
+      },
+      order: {
+        createdAt: 'DESC'
+      },
+      take: 10
+    })
+    log('Suggest posts list:', list)
+    return list
   }
   async getAll(data: GetPostListInputDTO): Promise<Posts[]> {
     const { content } = data

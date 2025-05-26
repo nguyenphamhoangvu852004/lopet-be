@@ -26,6 +26,7 @@ export class CreatePostOutputDTO {
   content!: string
   groupId!: number | null
   postType!: string
+  scope!: string
   postMedias?: PostMediaInputDTO[]
   createdAt!: Date
   updatedAt!: Date

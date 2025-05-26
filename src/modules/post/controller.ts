@@ -14,6 +14,22 @@ export class PostController {
   constructor(private postService: IPostService) {
     this.postService = postService
   }
+  async getSuggestList(req: Request, res: Response) {
+    try {
+      const response = await this.postService.getSuggestList()
+      sendResponse(
+        new ApiResponse({
+          data: response,
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Get suggest posts successfully'
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+      return
+    }
+  }
   async getAll(req: Request, res: Response) {
     try {
       const content = req.query.content
