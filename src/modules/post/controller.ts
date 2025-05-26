@@ -72,6 +72,7 @@ export class PostController {
       const files = req.files as { images?: Express.Multer.File[]; videos?: Express.Multer.File[] }
       const images: PostMediaInputDTO[] = []
       const videos: PostMediaInputDTO[] = []
+
       if (files.images) {
         for (const image of files.images) {
           const rs = await cloudinary.uploader.upload(image.path, { resource_type: 'image' })
@@ -83,6 +84,7 @@ export class PostController {
           logger.info(image)
         }
       }
+
       if (files.videos) {
         for (const video of files.videos) {
           const rs = await cloudinary.uploader.upload(files.videos[0].path, { resource_type: 'video' })
@@ -94,9 +96,11 @@ export class PostController {
           logger.info(video)
         }
       }
+
       const dto = new CreatePostInputDTO({
         accountId: data.accountId,
         content: data.content,
+        scope: data.scope ?? 'PUBLIC', // nếu không có scope thì mặc định là PUBLIC
         groupId: data.groupId ?? null, // nếu như groupId có giá trị thì cái loại bài viết này nó là bài viết GROUP, còn không thì nó là bài của USER
         postMedias: [...images, ...videos]
       })

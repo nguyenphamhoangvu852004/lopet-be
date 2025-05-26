@@ -5,6 +5,7 @@ import { DeleteGroupInputDTO, DeleteGroupOutputDTO } from '~/modules/group/dto/D
 import { RemoveMemberInputDTO, RemoveMemberOutputDTO } from '~/modules/group/dto/DeleteMember'
 import { GetListJoinedOutputDTO } from '~/modules/group/dto/GeListJoined'
 import { GetListOwnedOutputDTO } from '~/modules/group/dto/GetListOwned'
+import { GetListSuggestGroupOutputDTO } from '~/modules/group/dto/GetListSuggest'
 import { ModifyGroupInputDTO, ModifyGroupOutputDTO } from '~/modules/group/dto/ModifyGroup'
 
 export default interface IGroupService {
@@ -14,7 +15,7 @@ export default interface IGroupService {
   getById(data: number): Promise<Groups>
   getListOwnedGroup(data: number): Promise<GetListOwnedOutputDTO[]>
   getListJoinedGroup(data: number): Promise<GetListJoinedOutputDTO[]>
-  getListSuggestGroup(): Promise<Groups[]>
+  getListSuggestGroup(): Promise<GetListSuggestGroupOutputDTO[]>
   modifyGroup(data: ModifyGroupInputDTO): Promise<ModifyGroupOutputDTO>
   deleteGroup(data: DeleteGroupInputDTO): Promise<DeleteGroupOutputDTO>
 }

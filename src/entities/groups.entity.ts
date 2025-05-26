@@ -33,11 +33,6 @@ export class Groups extends BaseEntity {
   type!: GROUPTYPE
 
   @Column({
-    type: 'int',
-    nullable: false
-  })
-  totalMembers!: number
-  @Column({
     type: 'varchar',
     nullable: true
   })
@@ -68,5 +63,4 @@ export class Groups extends BaseEntity {
     super()
     Object.assign(this, data)
   }
-
 }

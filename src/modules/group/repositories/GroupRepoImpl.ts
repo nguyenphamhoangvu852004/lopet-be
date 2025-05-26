@@ -83,7 +83,14 @@ export default class GroupRepoImpl implements IGroupRepo {
   }
 
   async getListSuggest(): Promise<Groups[]> {
-    const response = await this.groupRepo.createQueryBuilder('groups').orderBy('RAND()').limit(10).getMany()
+    const response = await this.groupRepo
+      .createQueryBuilder('groups')
+      .leftJoinAndSelect('groups.members', 'members')
+      .leftJoinAndSelect('groups.owner', 'owner')
+      .orderBy('RAND()')
+      .limit(10)
+      .getMany()
+    console.log(response)
     return response
   }
 }

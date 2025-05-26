@@ -12,6 +12,7 @@ export class CreatePostInputDTO {
   content!: string
   groupId!: number
   postMedias?: PostMediaInputDTO[]
+  scope!: string
   createdAt!: Date
   updatedAt!: Date
   constructor(data?: Partial<CreatePostInputDTO>) {

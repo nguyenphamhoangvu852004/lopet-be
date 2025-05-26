@@ -174,8 +174,10 @@ export default class PostServiceImpl implements IPostService {
           newPostEntity.group = group
         }
       }
+
       newPostEntity.setType()
       const response: Posts | null = await this.postRepo.create(newPostEntity)
+
       if (!response) throw new BadRequest()
       // lấy dc postId
 

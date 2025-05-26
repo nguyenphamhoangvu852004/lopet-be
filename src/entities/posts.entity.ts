@@ -44,7 +44,8 @@ export class Posts extends BaseEntity {
   @Column({
     type: 'enum',
     enum: POSTSCOPE,
-    nullable: false
+    nullable: false,
+    default: POSTSCOPE.PUBLIC
   })
   postScope!: POSTSCOPE
 
@@ -69,5 +70,4 @@ export class Posts extends BaseEntity {
       this.postType = POSTTYPE.USER
     }
   }
-
 }

@@ -9,6 +9,7 @@ import { DeleteGroupInputDTO, DeleteGroupOutputDTO } from '~/modules/group/dto/D
 import { RemoveMemberInputDTO, RemoveMemberOutputDTO } from '~/modules/group/dto/DeleteMember'
 import { GetListJoinedOutputDTO } from '~/modules/group/dto/GeListJoined'
 import { GetListOwnedOutputDTO } from '~/modules/group/dto/GetListOwned'
+import { GetListSuggestGroupOutputDTO } from '~/modules/group/dto/GetListSuggest'
 import { ModifyGroupInputDTO, ModifyGroupOutputDTO } from '~/modules/group/dto/ModifyGroup'
 import IGroupRepo from '~/modules/group/repositories/IGroupRepo'
 import IGroupService from '~/modules/group/services/IGroupService'
@@ -114,10 +115,24 @@ export default class GroupServiceImpl implements IGroupService {
     }
   }
 
-  async getListSuggestGroup(): Promise<Groups[]> {
+  async getListSuggestGroup(): Promise<GetListSuggestGroupOutputDTO[]> {
     try {
       const repsonse = await this.groupRepo.getListSuggest()
-      return repsonse
+      const listDto: GetListSuggestGroupOutputDTO[] = []
+      for (const group of repsonse) {
+        const dto = new GetListJoinedOutputDTO({
+          id: group.id,
+          name: group.name,
+          ownerId: group.owner.id,
+          type: group.type,
+          bio: group.bio,
+          coverUrl: group.coverUrl,
+          createdAt: group.createdAt
+        })
+        dto.totalMembers = group.members.length
+        listDto.push(dto)
+      }
+      return listDto
     } catch (error) {
       handleThrowError(error)
     }
