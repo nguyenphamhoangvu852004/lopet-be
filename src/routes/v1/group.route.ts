@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { upload } from '~/config/multerConfig'
 import AccountRepoImpl from '~/modules/account/repositories/AccountRepoImpl'
 import { GroupController } from '~/modules/group/controller'
 import GroupRepoImpl from '~/modules/group/repositories/GroupRepoImpl'
@@ -16,7 +17,7 @@ groupRouter.get('/:id', controller.getById.bind(controller))
 groupRouter.get('/owned/:id', controller.getListOwned.bind(controller))
 groupRouter.get('/joined/:id', controller.getListJoined.bind(controller))
 
-groupRouter.post('/', controller.create.bind(controller))
+groupRouter.post('/', upload.single('image'), controller.create.bind(controller))
 groupRouter.post('/invites', controller.addMember.bind(controller))
 
 groupRouter.delete('/', controller.deleteGroup.bind(controller))

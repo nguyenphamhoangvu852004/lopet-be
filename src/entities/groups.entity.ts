@@ -32,6 +32,23 @@ export class Groups extends BaseEntity {
   })
   type!: GROUPTYPE
 
+  @Column({
+    type: 'int',
+    nullable: false
+  })
+  totalMembers!: number
+  @Column({
+    type: 'varchar',
+    nullable: true
+  })
+  bio!: string
+
+  @Column({
+    type: 'text',
+    nullable: false
+  })
+  coverUrl!: string
+
   @ManyToOne(() => Accounts, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'owner' })
   owner!: Accounts
@@ -50,5 +67,9 @@ export class Groups extends BaseEntity {
   constructor(data?: Partial<Groups>) {
     super()
     Object.assign(this, data)
+  }
+
+  setDefaultMemersAmount() {
+    this.totalMembers = 0
   }
 }

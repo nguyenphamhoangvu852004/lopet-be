@@ -1,4 +1,3 @@
-import { response } from 'express'
 import { logger } from '~/config/logger'
 import { Accounts } from '~/entities/accounts.entity'
 import { Groups } from '~/entities/groups.entity'
@@ -28,8 +27,11 @@ export default class GroupServiceImpl implements IGroupService {
       const newEntity = new Groups({
         name: data.name,
         type: data.type,
-        owner: account
+        owner: account,
+        bio: data.bio ?? '',
+        coverUrl: data.coverUrl ?? ''
       })
+      newEntity.setDefaultMemersAmount()
       const response: Groups | null = await this.groupRepo.create(newEntity)
       if (!response) throw new BadRequest()
       return new CreateGroupOutputDTO({
@@ -37,6 +39,8 @@ export default class GroupServiceImpl implements IGroupService {
         name: response.name,
         type: response.type,
         owner: response.owner.id,
+        bio: response.bio,
+        coverUrl: response.coverUrl,
         createdAt: response.createdAt
       })
     } catch (error) {

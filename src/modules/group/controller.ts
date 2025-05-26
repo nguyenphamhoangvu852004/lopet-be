@@ -7,7 +7,8 @@ import { CreateGroupInputDTO } from '~/modules/group/dto/Create'
 import { AddMemberInputDTO } from '~/modules/group/dto/AddMember'
 import { DeleteGroupInputDTO } from '~/modules/group/dto/DeleteGroup'
 import { RemoveMemberInputDTO } from '~/modules/group/dto/DeleteMember'
-import { GetListSuggestGroupInputDTO } from '~/modules/group/dto/GetListSuggest'
+import cloudinary from '~/config/cloudinary'
+import { GROUPTYPE } from '~/entities/groups.entity'
 
 export class GroupController {
   constructor(private service: IGroupService) {
@@ -16,12 +17,21 @@ export class GroupController {
 
   async create(req: Request, res: Response) {
     try {
-      const { name, type, owner } = req.body
+      const { name, type, owner, bio } = req.body
+      const file = req.file // ✅ not req.files
+      let uploadedImage
+      if (file) {
+        uploadedImage = await cloudinary.uploader.upload(file.path)
+      }
+
+      console.log(req.body)
 
       const dto = new CreateGroupInputDTO({
         name: name,
-        type: type,
-        owner: owner
+        type: type == 'PUBLIC' ? GROUPTYPE.PUBLIC : GROUPTYPE.PRIVATE,
+        owner: owner,
+        bio: bio ?? null,
+        coverUrl: uploadedImage.secure_url ?? ''
       })
 
       const response = await this.service.createGroup(dto)
