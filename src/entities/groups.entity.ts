@@ -69,7 +69,4 @@ export class Groups extends BaseEntity {
     Object.assign(this, data)
   }
 
-  setDefaultMemersAmount() {
-    this.totalMembers = 0
-  }
 }

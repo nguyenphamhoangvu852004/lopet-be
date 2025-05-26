@@ -58,6 +58,10 @@ export default class GroupRepoImpl implements IGroupRepo {
         owner: {
           id: data
         }
+      },
+      relations: {
+        owner: true,
+        members: true
       }
     })
     return response
@@ -69,6 +73,10 @@ export default class GroupRepoImpl implements IGroupRepo {
         members: {
           id: data
         }
+      },
+      relations: {
+        owner: true,
+        members: true
       }
     })
     return response

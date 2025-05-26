@@ -7,6 +7,8 @@ import { AddMemberInputDTO, AddMemberOutputDTO } from '~/modules/group/dto/AddMe
 import { CreateGroupInputDTO, CreateGroupOutputDTO } from '~/modules/group/dto/Create'
 import { DeleteGroupInputDTO, DeleteGroupOutputDTO } from '~/modules/group/dto/DeleteGroup'
 import { RemoveMemberInputDTO, RemoveMemberOutputDTO } from '~/modules/group/dto/DeleteMember'
+import { GetListJoinedOutputDTO } from '~/modules/group/dto/GeListJoined'
+import { GetListOwnedOutputDTO } from '~/modules/group/dto/GetListOwned'
 import { ModifyGroupInputDTO, ModifyGroupOutputDTO } from '~/modules/group/dto/ModifyGroup'
 import IGroupRepo from '~/modules/group/repositories/IGroupRepo'
 import IGroupService from '~/modules/group/services/IGroupService'
@@ -31,7 +33,6 @@ export default class GroupServiceImpl implements IGroupService {
         bio: data.bio ?? '',
         coverUrl: data.coverUrl ?? ''
       })
-      newEntity.setDefaultMemersAmount()
       const response: Groups | null = await this.groupRepo.create(newEntity)
       if (!response) throw new BadRequest()
       return new CreateGroupOutputDTO({
@@ -68,18 +69,46 @@ export default class GroupServiceImpl implements IGroupService {
       handleThrowError(error)
     }
   }
-  async getListOwnedGroup(data: number): Promise<Groups[]> {
+  async getListOwnedGroup(data: number): Promise<GetListOwnedOutputDTO[]> {
     try {
-      const response = await this.groupRepo.getListOwned(data)
-      return response
+      const response: Groups[] = await this.groupRepo.getListOwned(data)
+      const listDto: GetListOwnedOutputDTO[] = []
+      for (const group of response) {
+        const dto = new GetListOwnedOutputDTO({
+          id: group.id,
+          name: group.name,
+          ownerId: group.owner.id,
+          type: group.type,
+          bio: group.bio,
+          coverUrl: group.coverUrl,
+          createdAt: group.createdAt
+        })
+        dto.totalMembers = group.members.length
+        listDto.push(dto)
+      }
+      return listDto
     } catch (error) {
       handleThrowError(error)
     }
   }
-  async getListJoinedGroup(data: number): Promise<Groups[]> {
+  async getListJoinedGroup(data: number): Promise<GetListJoinedOutputDTO[]> {
     try {
       const response = await this.groupRepo.getListJoined(data)
-      return response
+      const listDto: GetListJoinedOutputDTO[] = []
+      for (const group of response) {
+        const dto = new GetListJoinedOutputDTO({
+          id: group.id,
+          name: group.name,
+          ownerId: group.owner.id,
+          type: group.type,
+          bio: group.bio,
+          coverUrl: group.coverUrl,
+          createdAt: group.createdAt
+        })
+        dto.totalMembers = group.members.length
+        listDto.push(dto)
+      }
+      return listDto
     } catch (error) {
       handleThrowError(error)
     }

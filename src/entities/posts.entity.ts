@@ -11,7 +11,11 @@ export enum POSTTYPE {
   GROUP = 'GROUP',
   USER = 'USER'
 }
-
+export enum POSTSCOPE {
+  PUBLIC = 'PUBLIC',
+  FRIEND = 'FRIEND',
+  PRIVATE = 'PRIVATE'
+}
 @Entity({ name: 'posts' })
 export class Posts extends BaseEntity {
   @PrimaryGeneratedColumn()
@@ -37,6 +41,13 @@ export class Posts extends BaseEntity {
   })
   postType!: POSTTYPE
 
+  @Column({
+    type: 'enum',
+    enum: POSTSCOPE,
+    nullable: false
+  })
+  postScope!: POSTSCOPE
+
   @OneToMany(() => PostMedias, (postMedias) => postMedias.post, { cascade: true })
   postMedias!: PostMedias[]
 
@@ -58,4 +69,5 @@ export class Posts extends BaseEntity {
       this.postType = POSTTYPE.USER
     }
   }
+
 }

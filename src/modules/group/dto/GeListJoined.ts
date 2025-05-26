@@ -5,6 +5,14 @@ export class GetListJoinedInputDTO {
 }
 
 export class GetListJoinedOutputDTO {
+  id!: number
+  name!: string
+  ownerId!: number
+  bio!: string
+  coverUrl!: string
+  type!: string
+  totalMembers!: number
+  createdAt!: Date
   constructor(data?: Partial<GetListJoinedOutputDTO>) {
     Object.assign(this, data)
   }
