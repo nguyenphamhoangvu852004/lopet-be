@@ -22,3 +22,5 @@ groupRouter.post('/invites', controller.addMember.bind(controller))
 
 groupRouter.delete('/', controller.deleteGroup.bind(controller))
 groupRouter.delete('/members', controller.removeMember.bind(controller))
+
+groupRouter.put('/:id', upload.single('image'), controller.modifyGroup.bind(controller))

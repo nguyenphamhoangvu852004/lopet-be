@@ -9,10 +9,42 @@ import { DeleteGroupInputDTO } from '~/modules/group/dto/DeleteGroup'
 import { RemoveMemberInputDTO } from '~/modules/group/dto/DeleteMember'
 import cloudinary from '~/config/cloudinary'
 import { GROUPTYPE } from '~/entities/groups.entity'
+import { ModifyGroupInputDTO } from '~/modules/group/dto/ModifyGroup'
 
 export class GroupController {
   constructor(private service: IGroupService) {
     this.service = service
+  }
+
+  async modifyGroup(req: Request, res: Response) {
+    try {
+      const { id } = req.params
+      const { name, type, owner, bio } = req.body
+      const file = req.file // ✅ not req.files
+      let uploadedImage
+      if (file) {
+        uploadedImage = await cloudinary.uploader.upload(file.path)
+      }
+      const dto = new ModifyGroupInputDTO({
+        id: Number(id),
+        bio: bio ?? null,
+        image: uploadedImage ?? null,
+        name: name,
+        owner: owner,
+        type: type == 'PUBLIC' ? GROUPTYPE.PUBLIC : GROUPTYPE.PRIVATE
+      })
+      const response = await this.service.modifyGroup(dto)
+      sendResponse(
+        new ApiResponse({
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Modify group successfully',
+          data: response
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+    }
   }
 
   async create(req: Request, res: Response) {

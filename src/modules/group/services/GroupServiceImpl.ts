@@ -138,8 +138,24 @@ export default class GroupServiceImpl implements IGroupService {
     }
   }
   async modifyGroup(data: ModifyGroupInputDTO): Promise<ModifyGroupOutputDTO> {
-    throw new Error('Method not implemented.')
+    try {
+      const group: Groups | null = await this.groupRepo.findById(data.id)
+      if (!group) throw new BadRequest()
+      group.name = data.name ?? group.name
+      group.type = data.type ?? group.type
+      group.bio = data.bio ?? group.bio
+      group.coverUrl = data.image ?? group.coverUrl
+      const response = await this.groupRepo.update(group)
+      if (!response) throw new BadRequest()
+      return new ModifyGroupOutputDTO({
+        id: response.id,
+        success: true
+      })
+    } catch (error) {
+      handleThrowError(error)
+    }
   }
+
   async deleteGroup(data: DeleteGroupInputDTO): Promise<DeleteGroupOutputDTO> {
     try {
       if (!(await this.groupRepo.isOwned(data.groupId, data.owner))) {
