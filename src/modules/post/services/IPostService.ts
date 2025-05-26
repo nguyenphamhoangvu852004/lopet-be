@@ -7,8 +7,10 @@ import {
   GetPostOutputDTO
 } from '~/modules/post/dto/Get'
 import { LikePostInputDTO, LikePostOuputDTO, UnlikePostInputDTO, UnlikePostOutputDTO } from '~/modules/post/dto/React'
+import { UpdatePostInputDTO, UpdatePostOutputDTO } from '~/modules/post/dto/Update'
 
 export default interface IPostService {
+  update(data: UpdatePostInputDTO): Promise<UpdatePostOutputDTO>
   getSuggestList(): Promise<GetPostOutputDTO[]>
   getAll(data: GetPostListInputDTO): Promise<GetPostOutputDTO[]>
   getOneById(id): Promise<GetPostDetailOutputDTO>

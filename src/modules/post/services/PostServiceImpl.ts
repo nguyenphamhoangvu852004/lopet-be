@@ -14,6 +14,7 @@ import {
   GetPostOutputDTO
 } from '~/modules/post/dto/Get'
 import { LikePostInputDTO, LikePostOuputDTO, UnlikePostInputDTO, UnlikePostOutputDTO } from '~/modules/post/dto/React'
+import { UpdatePostInputDTO, UpdatePostOutputDTO } from '~/modules/post/dto/Update'
 import IPostRepo from '~/modules/post/repositories/IPostRepo'
 import IPostService from '~/modules/post/services/IPostService'
 import IPostLikeRepo from '~/modules/postLike/repositories/IPostLikeRepo'
@@ -34,6 +35,66 @@ export default class PostServiceImpl implements IPostService {
     this.postMediaRepo = postMediaRepo
     this.postLikesRepo = postLikesRepo
   }
+  async update(data: UpdatePostInputDTO): Promise<CreatePostOutputDTO> {
+    try {
+      const post = await this.postRepo.getOne(data.postId)
+      if (!post) throw new BadRequest('Post not found')
+
+      // Kiểm tra quyền sở hữu
+      // if (post.accounts.id !== data.accountId) {
+      //   throw new Forbidden('You are not the owner of this post')
+      // }
+
+      // Cập nhật content
+      post.content = data.content
+
+      // Cập nhật scope
+      if (data.scope === 'PUBLIC') post.postScope = POSTSCOPE.PUBLIC
+      else if (data.scope === 'FRIEND') post.postScope = POSTSCOPE.FRIEND
+      else if (data.scope === 'PRIVATE') post.postScope = POSTSCOPE.PRIVATE
+
+      const updatedPost = await this.postRepo.update(post)
+      if (!updatedPost) throw new BadRequest('Update failed')
+
+      // Xóa media cũ
+      await this.postMediaRepo.deleteByPostId(post.id)
+
+      // Thêm media mới
+      const newMediaList: PostMediaInputDTO[] = []
+      for (const item of data.postMedias ?? []) {
+        const newMediaEntity = new PostMedias({
+          post: post,
+          mediaUrl: item.mediaUrl,
+          mediaType: item.mediaType === 'IMAGE' ? MEDIATYPE.IMAGE : MEDIATYPE.VIDEO
+        })
+        const saved = await this.postMediaRepo.create(newMediaEntity)
+        if (!saved) throw new BadRequest('Save media failed')
+
+        newMediaList.push({
+          mediaUrl: saved.mediaUrl,
+          mediaType: saved.mediaType,
+          updatedAt: new Date(),
+          createdAt: new Date()
+        })
+      }
+
+      // Trả về DTO giống create
+      return new CreatePostOutputDTO({
+        accountId: updatedPost.accounts.id,
+        content: updatedPost.content,
+        postId: updatedPost.id,
+        postType: updatedPost.postType,
+        scope: updatedPost.postScope,
+        groupId: updatedPost.group?.id ?? null,
+        updatedAt: new Date(),
+        createdAt: updatedPost.createdAt,
+        postMedias: newMediaList
+      })
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
   async getSuggestList(): Promise<GetPostOutputDTO[]> {
     try {
       const listEntity = await this.postRepo.getSuggestList()

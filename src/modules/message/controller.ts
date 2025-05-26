@@ -8,10 +8,34 @@ import { ChangeStatusMessageInputDTO } from '~/modules/message/dto/Update'
 import { MESSAGESTATUS } from '~/entities/messages.entity'
 import { ApiResponse, sendResponse } from '~/response/api.response'
 import { httpStatusCode } from '~/global/httpStatusCode'
+import { GetListMessageInputDTO } from '~/modules/message/dto/Get'
 
 export class MessageController {
   constructor(private service: IMessageService) {
     this.service = service
+  }
+  async getListMessage(req: Request, res: Response) {
+    try {
+      const { id } = req.params
+      const { targetId } = req.body
+
+      const inputDTO = new GetListMessageInputDTO({
+        senderId: Number(id),
+        receiverId: Number(targetId)
+      })
+      const response = await this.service.getListMessage(inputDTO)
+      sendResponse(
+        new ApiResponse({
+          data: response,
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Get list message successfully'
+        })
+      )
+    } catch (error) {
+      handleControllerError(error, res)
+      return
+    }
   }
   async getDetail(req: Request, res: Response) {
     try {
@@ -52,21 +76,23 @@ export class MessageController {
   }
   async createMessage(req: Request, res: Response) {
     try {
-      log('sdlkfjasldk;fj')
-      log(req.body)
-      const image = req.file
+      log('📥 Body:', req.body)
+      const image = req.file as Express.Multer.File
       let uploadedImage
-      if (image) {
+
+      if (image?.path) {
         uploadedImage = await cloudinary.uploader.upload(image.path)
       }
+
       const dto = new CreateMessageInputDTO({
         content: req.body.content ?? '',
         senderId: req.body.senderId,
         receiverId: req.body.receiverId,
-        imageUrl: uploadedImage.secure_url ?? ''
+        imageUrl: uploadedImage?.secure_url ?? ''
       })
 
       const response = await this.service.createMessage(dto)
+
       res.status(201).json({
         status: 'success',
         message: 'Message created successfully',
@@ -74,7 +100,6 @@ export class MessageController {
       })
     } catch (error) {
       handleControllerError(error, res)
-      return
     }
   }
 }

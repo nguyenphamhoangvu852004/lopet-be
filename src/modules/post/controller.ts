@@ -9,10 +9,89 @@ import { logger } from '~/config/logger'
 import { MEDIATYPE } from '~/entities/postMedias.entity'
 import { LikePostInputDTO, UnlikePostInputDTO } from '~/modules/post/dto/React'
 import { GetPostListInputDTO } from '~/modules/post/dto/Get'
+import { POSTSCOPE } from '~/entities/posts.entity'
+import { UpdatePostInputDTO } from '~/modules/post/dto/Update'
+import { BadRequest } from '~/error/error.custom'
 
 export class PostController {
   constructor(private postService: IPostService) {
     this.postService = postService
+  }
+  async update(req: Request, res: Response) {
+    try {
+      const data = req.body
+      const { postId } = req.params
+      console.log('Update post data:', data)
+      console.log('Post ID:', postId)
+      const files = req.files as { images?: Express.Multer.File[]; videos?: Express.Multer.File[] }
+      const images: PostMediaInputDTO[] = []
+      const videos: PostMediaInputDTO[] = []
+
+      if (files.images) {
+        for (const image of files.images) {
+          const rs = await cloudinary.uploader.upload(image.path, { resource_type: 'image' })
+          const imageDTO = new PostMediaInputDTO({
+            mediaUrl: rs.secure_url,
+            mediaType: rs.resource_type == 'image' ? MEDIATYPE.IMAGE : MEDIATYPE.VIDEO
+          })
+          images.push(imageDTO)
+          logger.info(image)
+        }
+      }
+
+      if (files.videos) {
+        for (const video of files.videos) {
+          const rs = await cloudinary.uploader.upload(files.videos[0].path, { resource_type: 'video' })
+          const videoDTO = new PostMediaInputDTO({
+            mediaUrl: rs.secure_url,
+            mediaType: rs.resource_type == 'image' ? MEDIATYPE.IMAGE : MEDIATYPE.VIDEO
+          })
+          videos.push(videoDTO)
+          logger.info(video)
+        }
+      }
+
+      const dto = new UpdatePostInputDTO({
+        postId: Number(postId),
+        accountId: data.accountId,
+        content: data.content,
+        postMedias: [...images, ...videos]
+      })
+      if (data.groupId) {
+        // Đây là bài viết trong group ⇒ chỉ cho phép PUBLIC hoặc PRIVATE
+        if (data.scope === 'PUBLIC') {
+          dto.scope = POSTSCOPE.PUBLIC
+        } else if (data.scope === 'PRIVATE') {
+          dto.scope = POSTSCOPE.PRIVATE
+        } else {
+          throw new BadRequest()
+        }
+      } else {
+        // Đây là bài viết cá nhân
+        if (data.scope === 'PUBLIC') {
+          dto.scope = POSTSCOPE.PUBLIC
+        } else if (data.scope === 'FRIEND') {
+          dto.scope = POSTSCOPE.FRIEND
+        } else if (data.scope === 'PRIVATE') {
+          dto.scope = POSTSCOPE.PRIVATE
+        } else {
+          throw new BadRequest()
+        }
+      }
+      const response = await this.postService.update(dto)
+
+      console.log(response)
+      sendResponse(
+        new ApiResponse({
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Update post successfully',
+          data: response
+        })
+      )
+    } catch (err) {
+      handleControllerError(err, res)
+    }
   }
   async getSuggestList(req: Request, res: Response) {
     try {
@@ -116,10 +195,32 @@ export class PostController {
       const dto = new CreatePostInputDTO({
         accountId: data.accountId,
         content: data.content,
-        scope: data.scope ?? 'PUBLIC', // nếu không có scope thì mặc định là PUBLIC
         groupId: data.groupId ?? null, // nếu như groupId có giá trị thì cái loại bài viết này nó là bài viết GROUP, còn không thì nó là bài của USER
         postMedias: [...images, ...videos]
       })
+
+      if (data.groupId) {
+        // Đây là bài viết trong group ⇒ chỉ cho phép PUBLIC hoặc PRIVATE
+        if (data.scope === 'PUBLIC') {
+          dto.scope = POSTSCOPE.PUBLIC
+        } else if (data.scope === 'PRIVATE') {
+          dto.scope = POSTSCOPE.PRIVATE
+        } else {
+          throw new BadRequest()
+        }
+      } else {
+        // Đây là bài viết cá nhân
+        if (data.scope === 'PUBLIC') {
+          dto.scope = POSTSCOPE.PUBLIC
+        } else if (data.scope === 'FRIEND') {
+          dto.scope = POSTSCOPE.FRIEND
+        } else if (data.scope === 'PRIVATE') {
+          dto.scope = POSTSCOPE.PRIVATE
+        } else {
+          throw new BadRequest()
+        }
+      }
+
       const response = await this.postService.create(new CreatePostInputDTO(dto))
       console.log(response)
       sendResponse(

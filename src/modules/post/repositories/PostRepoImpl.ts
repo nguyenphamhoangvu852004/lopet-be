@@ -12,6 +12,14 @@ export default class PostRepoImpl implements IPostRepo {
   constructor() {
     this.postRepo = mySqlDataSource.getRepository(Posts)
   }
+  async update(data: Posts): Promise<Posts | null> {
+    const updatedPost = await this.postRepo.save(data)
+    console.log('Updated post:', updatedPost)
+    if (!updatedPost) {
+      return null
+    }
+    return updatedPost
+  }
   async getSuggestList(): Promise<Posts[]> {
     const list: Posts[] = await this.postRepo.find({
       relations: {

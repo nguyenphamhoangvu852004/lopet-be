@@ -15,5 +15,6 @@ const service = new MessageServiceImpl(messageRepo, accountRepo, profileRepo)
 const controller = new MessageController(service)
 
 messageRouter.get('/:id', controller.getDetail.bind(controller))
+messageRouter.get('/me/:id', controller.getListMessage.bind(controller))
 messageRouter.post('/', upload.single('image'), controller.createMessage.bind(controller))
 messageRouter.patch('/status/:id', controller.updateStatus.bind(controller))

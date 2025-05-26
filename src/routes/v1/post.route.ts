@@ -35,3 +35,11 @@ postRouter.delete('/:id', controller.delete.bind(controller))
 
 postRouter.post('/like', controller.like.bind(controller))
 postRouter.post('/unlike', controller.unlike.bind(controller))
+postRouter.put(
+  '/:postId',
+  upload.fields([
+    { name: 'images', maxCount: 5 },
+    { name: 'videos', maxCount: 5 }
+  ]),
+  controller.update.bind(controller)
+)

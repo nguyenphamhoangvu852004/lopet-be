@@ -15,7 +15,6 @@ export class GroupController {
   constructor(private service: IGroupService) {
     this.service = service
   }
-
   async modifyGroup(req: Request, res: Response) {
     try {
       const { id } = req.params
@@ -46,24 +45,24 @@ export class GroupController {
       handleControllerError(error, res)
     }
   }
-
   async create(req: Request, res: Response) {
     try {
       const { name, type, owner, bio } = req.body
-      const file = req.file // ✅ not req.files
+      const file = req.file
       let uploadedImage
+
       if (file) {
         uploadedImage = await cloudinary.uploader.upload(file.path)
+      } else {
+        uploadedImage = ''
       }
-
-      console.log(req.body)
 
       const dto = new CreateGroupInputDTO({
         name: name,
         type: type == 'PUBLIC' ? GROUPTYPE.PUBLIC : GROUPTYPE.PRIVATE,
         owner: owner,
         bio: bio ?? null,
-        coverUrl: uploadedImage.secure_url ?? ''
+        coverUrl: uploadedImage?.secure_url ?? uploadedImage
       })
 
       const response = await this.service.createGroup(dto)

@@ -2,7 +2,7 @@ import { log } from 'console'
 import { Messages, MESSAGESTATUS } from '~/entities/messages.entity'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { CreateMessageInputDTO, CreateMessageOutputDTO } from '~/modules/message/dto/CreateMessageDTO'
-import { GetMessageOutputDTO } from '~/modules/message/dto/Get'
+import { GetListMessageInputDTO, GetMessageOutputDTO } from '~/modules/message/dto/Get'
 import { ChangeStatusMessageInputDTO, ChangeStatusMessageOutputDTO } from '~/modules/message/dto/Update'
 import { IMessageRepo } from '~/modules/message/repositories/IMessageRepo'
 import IMessageService from '~/modules/message/services/IMessageService'
@@ -18,6 +18,32 @@ export default class MessageServiceImpl implements IMessageService {
     this.messageRepo = messageRepo
     this.accountRepo = accountRepo
     this.profileRepo = profileRepo
+  }
+  async getListMessage(data: GetListMessageInputDTO): Promise<GetMessageOutputDTO[]> {
+    try {
+      const sender = await this.accountRepo.findById(data.senderId)
+      if (!sender) throw new Error('Sender not found')
+      const receiver = await this.accountRepo.findById(data.receiverId)
+      if (!receiver) throw new Error('Receiver not found')
+
+      const response = await this.messageRepo.getListMessage(data.senderId, data.receiverId)
+      const listdto: GetMessageOutputDTO[] = []
+
+      for (const message of response) {
+        const dto = new GetMessageOutputDTO({
+          id: message.id,
+          content: message.content,
+          senderId: message.sender.id,
+          receiverId: message.receiver.id,
+          createdAt: message.createdAt,
+          status: message.status
+        })
+        listdto.push(dto)
+      }
+      return listdto
+    } catch (error) {
+      handleThrowError(error)
+    }
   }
 
   async getDetail(data: number): Promise<GetMessageOutputDTO> {
