@@ -14,7 +14,7 @@ import {
   GetPostOutputDTO
 } from '~/modules/post/dto/Get'
 import { LikePostInputDTO, LikePostOuputDTO, UnlikePostInputDTO, UnlikePostOutputDTO } from '~/modules/post/dto/React'
-import { UpdatePostInputDTO, UpdatePostOutputDTO } from '~/modules/post/dto/Update'
+import { UpdatePostInputDTO } from '~/modules/post/dto/Update'
 import IPostRepo from '~/modules/post/repositories/IPostRepo'
 import IPostService from '~/modules/post/services/IPostService'
 import IPostLikeRepo from '~/modules/postLike/repositories/IPostLikeRepo'

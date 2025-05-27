@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { IReportService } from '~/modules/report/services/IReportService'
 import { handleControllerError } from '~/utils/handle.util'
 import { Request, Response } from 'express'

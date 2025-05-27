@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Repository } from 'typeorm'
 import { mySqlDataSource } from '~/config/appDataSource'
 import { logger } from '~/config/logger'

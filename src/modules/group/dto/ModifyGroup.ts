@@ -1,4 +1,4 @@
-import { GROUPTYPE } from "~/entities/groups.entity"
+import { GROUPTYPE } from '~/entities/groups.entity'
 
 export class ModifyGroupInputDTO {
   id!: number

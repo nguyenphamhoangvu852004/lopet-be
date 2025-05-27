@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Accounts } from '~/entities/accounts.entity'
 import { Profiles } from '~/entities/profiles.entity'
 import { BadRequest, NotFound } from '~/error/error.custom'

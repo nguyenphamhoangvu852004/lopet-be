@@ -1,4 +1,3 @@
-import { relative } from 'path'
 import { Repository } from 'typeorm'
 import { mySqlDataSource } from '~/config/appDataSource'
 import { Messages } from '~/entities/messages.entity'

@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm'
 import { mySqlDataSource } from '~/config/appDataSource'
-import { ROLENAME, Roles } from '~/entities/roles.entity'
+import { Roles } from '~/entities/roles.entity'
 import IRoleRepo from '~/modules/role/repo/IRoleRepo'
 
 export default class RoleRepoImpl implements IRoleRepo {

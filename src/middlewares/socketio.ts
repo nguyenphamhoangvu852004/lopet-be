@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Server, Socket } from 'socket.io'
 import jwt from 'jsonwebtoken'
 

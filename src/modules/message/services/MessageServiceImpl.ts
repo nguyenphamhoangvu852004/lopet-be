@@ -1,4 +1,3 @@
-import { log } from 'console'
 import { Messages, MESSAGESTATUS } from '~/entities/messages.entity'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { CreateMessageInputDTO, CreateMessageOutputDTO } from '~/modules/message/dto/CreateMessageDTO'

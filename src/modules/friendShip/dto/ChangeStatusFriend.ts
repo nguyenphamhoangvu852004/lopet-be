@@ -1,4 +1,4 @@
-import { FRIENDSHIPSTATUS } from "~/entities/friendShips.entity"
+import { FRIENDSHIPSTATUS } from '~/entities/friendShips.entity'
 
 export class ChangeStatusFriendShipInputDTO {
   senderId!: number

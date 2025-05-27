@@ -5,5 +5,4 @@ export interface IMessageRepo {
   findById(data: number): Promise<Messages | null>
   changeStatus(data: Messages): Promise<Messages | null>
   getListMessage(senderId: number, receiverId: number): Promise<Messages[]>
-
 }
