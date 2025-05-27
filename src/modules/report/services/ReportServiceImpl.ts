@@ -3,6 +3,7 @@ import { BadRequest } from '~/error/error.custom'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import IGroupRepo from '~/modules/group/repositories/IGroupRepo'
 import IPostRepo from '~/modules/post/repositories/IPostRepo'
+import { ChangeStatusReportInputDTO, ChangeStatusReportOutputDTO } from '~/modules/report/dto/ChangeStatusReportDTO'
 import { CreateReportInputDTO, CreateReportOutputDTO } from '~/modules/report/dto/Create'
 import { GetListReportInputDTO } from '~/modules/report/dto/Get'
 import { IReportRepo } from '~/modules/report/repositories/IReportRepo'
@@ -20,6 +21,27 @@ export class ReportServiceImpl implements IReportService {
     this.accountRepo = accountRepo
     this.groupRepo = groupRepo
     this.postRepo = postRepo
+  }
+  async update(data: ChangeStatusReportInputDTO): Promise<ChangeStatusReportOutputDTO | null> {
+    try {
+      const listEntity: Reports[] = await this.reportRepo.find(
+        new GetListReportInputDTO({
+          targetId: data.targetId,
+          type: data.type
+        })
+      )
+      for (const entity of listEntity) {
+        entity.action = data.action
+        const response = await this.reportRepo.update(entity)
+        if (!response) throw new BadRequest()
+      }
+      const dto = new ChangeStatusReportOutputDTO({
+        id: data.targetId
+      })
+      return dto
+    } catch (error) {
+      handleThrowError(error)
+    }
   }
   async getList(data: GetListReportInputDTO): Promise<Reports[]> {
     try {

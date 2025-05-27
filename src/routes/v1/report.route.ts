@@ -17,3 +17,4 @@ const controller = new ReportController(reportService)
 
 reportRouter.get('/', controller.getList.bind(controller))
 reportRouter.post('/', controller.create.bind(controller))
+reportRouter.put('/:targetId', controller.update.bind(controller))

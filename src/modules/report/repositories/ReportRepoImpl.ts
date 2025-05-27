@@ -10,6 +10,7 @@ export class ReportRepoImpl implements IReportRepo {
   constructor() {
     this.reportRepo = mySqlDataSource.getRepository(Reports)
   }
+
   async find(filters: GetListReportInputDTO): Promise<Reports[]> {
     const whereClause: any = {
       ...(filters.accountId ? { accounts: { id: filters.accountId } } : {}),
@@ -24,6 +25,11 @@ export class ReportRepoImpl implements IReportRepo {
 
   async create(report: Reports): Promise<Reports | null> {
     const result = await this.reportRepo.save(report)
+    if (!result) return null
+    return result
+  }
+  async update(data: Reports): Promise<Reports | null> {
+    const result = await this.reportRepo.save(data)
     if (!result) return null
     return result
   }
