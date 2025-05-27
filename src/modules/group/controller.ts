@@ -27,7 +27,7 @@ export class GroupController {
       const dto = new ModifyGroupInputDTO({
         id: Number(id),
         bio: bio ?? null,
-        image: uploadedImage ?? null,
+        image: uploadedImage.secure_url ?? null,
         name: name,
         owner: owner,
         type: type == 'PUBLIC' ? GROUPTYPE.PUBLIC : GROUPTYPE.PRIVATE
