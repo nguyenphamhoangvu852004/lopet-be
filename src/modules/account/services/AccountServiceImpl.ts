@@ -15,9 +15,17 @@ export class AccountServiceImpl implements IAccountService {
   constructor(private repo: IAccountRepo) {
     this.repo = repo
   }
-  async getSuggest(id: number,limit: number): Promise<Accounts[]> {
+  async setRolesToAccount(userId: string, roles: string[]): Promise<Accounts> {
     try {
-      const accounts = await this.repo.getSuggest(id,limit)
+      const account = await this.repo.setRolesToAccount(Number(userId), roles)
+      return account
+    } catch (error: Error | any) {
+      throw new Error(error.message)
+    }
+  }
+  async getSuggest(id: number, limit: number): Promise<Accounts[]> {
+    try {
+      const accounts = await this.repo.getSuggest(id, limit)
       return accounts
     } catch (error) {
       handleThrowError(error)

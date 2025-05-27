@@ -61,6 +61,7 @@ export class GetPostByAccountIdOutputDTO {
 
 export class GetPostListInputDTO {
   content?: string
+  groupId?: number
   constructor(data?: Partial<GetPostListInputDTO>) {
     Object.assign(this, data)
   }

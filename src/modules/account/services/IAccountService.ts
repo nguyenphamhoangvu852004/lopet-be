@@ -6,10 +6,11 @@ import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import { CreateProfileOutputDTO } from '~/modules/profile/dto/Create'
 
 export interface IAccountService {
+  setRolesToAccount(userId: string, roles: string[]): Promise<Accounts>
   getById(data: number): Promise<GetAccountOutputDTO>
   getByEmail(data: string): Promise<GetAccountOutputDTO>
   getByUsername(data: string): Promise<GetAccountOutputDTO>
-  getSuggest(id: number,limit:number): Promise<Accounts[]>
+  getSuggest(id: number, limit: number): Promise<Accounts[]>
   getList(): Promise<Accounts[]>
   createAccount(data: CreateAccountDTO): Promise<GetAccountOutputDTO>
   setProfile(accountId: number, profile: CreateProfileOutputDTO): Promise<GetAccountOutputDTO>

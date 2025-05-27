@@ -4,6 +4,7 @@ import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { CreateAdvertsementInputDTO, CreateAdvertsementOutputDTO } from '~/modules/advertisement/dto/Create'
 import { DeleteAdvertsementOutputDTO } from '~/modules/advertisement/dto/Delete'
 import { Author, GetDetailAdvertisementOutputDTO } from '~/modules/advertisement/dto/Get'
+import { UpdateAdvertsementInputDTO, UpdateAdvertsementOutputDTO } from '~/modules/advertisement/dto/Update'
 import { IAdvertisementRepositories } from '~/modules/advertisement/repositories/IAdvertisementRepositories'
 import { IAdvertisementService } from '~/modules/advertisement/services/IAdvertisementService'
 import { handleThrowError } from '~/utils/handle.util'
@@ -98,6 +99,29 @@ export class AdvertisementServiceImpl implements IAdvertisementService {
       if (!response) throw new BadRequest()
 
       const outDto = new CreateAdvertsementOutputDTO({
+        id: response.id
+      })
+      return outDto
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
+  async update(data: UpdateAdvertsementInputDTO): Promise<UpdateAdvertsementOutputDTO> {
+    try {
+      const ads = await this.advertisementRepo.findById(data.adsId)
+      if (!ads) throw new BadRequest()
+      const account = await this.accountRepo.findById(data.accountId)
+      if (!account) throw new BadRequest()
+      ads.account = account
+      ads.description = data.description
+      ads.imageUrl = data.imageurl
+      ads.linkReferfence = data.linkref
+      ads.title = data.title
+      ads.updatedAt = new Date()
+      const response = await this.advertisementRepo.update(ads)
+      if (!response) throw new BadRequest()
+      const outDto = new UpdateAdvertsementOutputDTO({
         id: response.id
       })
       return outDto

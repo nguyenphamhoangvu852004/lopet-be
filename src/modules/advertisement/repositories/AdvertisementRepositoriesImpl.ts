@@ -8,6 +8,11 @@ export class AdvertisementRepositoriesImpl implements IAdvertisementRepositories
   constructor() {
     this.advertisementRepo = mySqlDataSource.getRepository(Advertisements)
   }
+  async update(data: Advertisements): Promise<Advertisements | null> {
+    const response = await this.advertisementRepo.save(data)
+    if (!response) return null
+    return response
+  }
   async delete(data: Advertisements): Promise<Advertisements | null> {
     const response = await this.advertisementRepo.remove(data)
     if (!response) return null

@@ -22,4 +22,6 @@ advertisementRouter.post(
   upload.single('image'),
   controller.create.bind(controller)
 )
+
+advertisementRouter.put('/:id', controller.update.bind(controller))
 advertisementRouter.delete('/:id', controller.delete.bind(controller))

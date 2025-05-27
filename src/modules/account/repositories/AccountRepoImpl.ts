@@ -4,16 +4,40 @@ import { logger } from '~/config/logger'
 import { Accounts } from '~/entities/accounts.entity'
 import { FriendShips } from '~/entities/friendShips.entity'
 import { Profiles } from '~/entities/profiles.entity'
+import { ROLENAME, Roles } from '~/entities/roles.entity'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 
 export default class AccountRepoImpl implements IAccountRepo {
   private accountsRepo: Repository<Accounts>
   private profileRepo: Repository<Profiles>
   private friendShipRepo: Repository<FriendShips>
+  private roleRepo: Repository<Roles>
   constructor() {
     this.accountsRepo = mySqlDataSource.getRepository(Accounts)
     this.profileRepo = mySqlDataSource.getRepository(Profiles)
     this.friendShipRepo = mySqlDataSource.getRepository(FriendShips)
+    this.roleRepo = mySqlDataSource.getRepository(Roles)
+  }
+  async setRolesToAccount(userId: number, roles: string[]): Promise<Accounts> {
+    try {
+      const account = await this.accountsRepo.findOneBy({ id: userId })
+      if (!account) {
+        throw new Error('Account not found')
+      }
+      const listRole: Roles[] = []
+      for (const item of roles) {
+        const role = await this.roleRepo.findOneBy({ name: item as ROLENAME })
+        if (!role) {
+          throw new Error('Role not found')
+        }
+        listRole.push(role)
+      }
+      account.roles = listRole
+      await this.accountsRepo.save(account)
+      return account
+    } catch (error: Error | any) {
+      throw new Error(error.message)
+    }
   }
   async findById(id: number): Promise<Accounts | null> {
     const account = await this.accountsRepo.findOne({

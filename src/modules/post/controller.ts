@@ -113,8 +113,13 @@ export class PostController {
     try {
       const content = req.query.content
       const safeContent = content && content !== 'undefined' ? String(content) : undefined
+
+      const groupId = req.query.groupId
+      const safeGroupId = groupId && groupId !== 'undefined' ? Number(groupId) : undefined
+
       const dto = new GetPostListInputDTO({
-        content: safeContent
+        content: safeContent,
+        groupId: safeGroupId
       })
       const response = await this.postService.getAll(dto)
       sendResponse(

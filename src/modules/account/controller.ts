@@ -124,4 +124,22 @@ export class AccountController {
       handleControllerError(error, res)
     }
   }
+  async setRolesToAccount(req: Request, res: Response) {
+    try {
+      const { userId, roles } = req.body
+      console.log(userId, roles)
+      const account = await this.service.setRolesToAccount(userId, roles)
+      sendResponse(
+        new ApiResponse({
+          data: account,
+          res: res,
+          statusCode: httpStatusCode.OK,
+          message: 'Set roles to account successfully'
+        })
+      )
+      return
+    } catch (error) {
+      handleControllerError(error, res)
+    }
+  }
 }

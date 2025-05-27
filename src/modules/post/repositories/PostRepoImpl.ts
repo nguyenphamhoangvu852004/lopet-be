@@ -40,10 +40,13 @@ export default class PostRepoImpl implements IPostRepo {
     return list
   }
   async getAll(data: GetPostListInputDTO): Promise<Posts[]> {
-    const { content } = data
+    const { content, groupId } = data
     const whereClause: any = {}
     if (content) {
       whereClause.content = ILike(`%${content}%`)
+    }
+    if (groupId) {
+      whereClause.group = { id: groupId }
     }
     console.log(whereClause)
     const list: Posts[] = await this.postRepo.find({
