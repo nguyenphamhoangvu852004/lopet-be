@@ -7,7 +7,6 @@ import { mySqlDataSource, redis } from '~/config/appDataSource'
 import { router } from '~/routes/index'
 import { logger } from '~/config/logger'
 import cors from 'cors'
-import { testRouter } from '~/routes/test'
 import { morganMiddleware } from '~/config/morgan'
 import { setupSocket } from '~/middlewares/socketio'
 
@@ -79,7 +78,6 @@ export async function startServer() {
     })
   )
   route.use(morganMiddleware)
-  route.use('/test', testRouter)
   route.use('/v1', router)
 
   setupSocket(io)
