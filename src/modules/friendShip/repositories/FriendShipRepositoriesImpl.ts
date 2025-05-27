@@ -43,7 +43,6 @@ export default class FriendShipRepositoriesImpl implements IFriendShipRepositori
       },
       relations: ['receiver'] // nếu muốn lấy info người được gửi lời mời
     })
-    console.log('list tu repo', response)
     return response
   }
 
@@ -60,7 +59,6 @@ export default class FriendShipRepositoriesImpl implements IFriendShipRepositori
     const friends = friendships.map((f) => {
       return f.sender.id === accountId ? f.receiver : f.sender
     })
-    console.log('friends ne', friends)
     return friends
   }
   async findAllReceivedFriendRequests(accountId: number): Promise<Accounts[]> {
@@ -72,7 +70,6 @@ export default class FriendShipRepositoriesImpl implements IFriendShipRepositori
       .getMany()
     // Lấy người gửi (sender) ra
 
-    console.log('Danh sach nhung nguoi la gui loi moi ket ban cho id nay', friendRequests)
     return friendRequests.map((f) => f.sender)
   }
 }

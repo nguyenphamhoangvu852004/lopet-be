@@ -9,11 +9,18 @@ import { logger } from '~/config/logger'
 import cors from 'cors'
 import { testRouter } from '~/routes/test'
 import { morganMiddleware } from '~/config/morgan'
+import { setupSocket } from '~/middlewares/socketio'
+
 const PORT = environment.APP_PORT
 const HOSTNAME = environment.APP_HOSTNAME
-
 export const app: core.Express = express()
 export const server = createServer(app)
+export const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+  }
+})
 
 const route: core.Router = express.Router()
 export async function startMysql() {
@@ -75,40 +82,12 @@ export async function startServer() {
   route.use('/test', testRouter)
   route.use('/v1', router)
 
-  const io = new Server(server, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-    }
+  setupSocket(io)
+
+  app.use((req, res, next) => {
+    res.io = io
+    next()
   })
-
-  io.on('connection', function (socket) {
-    console.log('a user connected', socket.id)
-    socket.on('register', function (msg) {
-      console.log(msg)
-    })
-
-    socket.on('join room', function (room) {
-      socket.join(room)
-      console.log(`${socket.id} has joined room ${room}`)
-    })
-
-    socket.on('message', (data) => {
-      console.log(`Message from ${socket.id} to room ${data.room}: ${data.message}`)
-      io.to(data.room).emit('message', {
-        from: socket.id,
-        message: data.message
-      })
-      socket.to(``).emit('receive message', data.message)
-    })
-
-    socket.on('private message', function (data) {
-      const { to, from, message, room } = data
-      console.log(`${from} to ${to}: ${message}`)
-      socket.to(room).emit('private message', { from, to, message })
-    })
-  })
-
   app.use(route)
 
   await new Promise<void>((resolve) => {

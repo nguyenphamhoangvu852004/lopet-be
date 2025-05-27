@@ -3,7 +3,6 @@ import { Request, Response } from 'express'
 import { ApiResponse, sendResponse } from '~/response/api.response'
 import { httpStatusCode } from '~/global/httpStatusCode'
 import { handleControllerError } from '~/utils/handle.util'
-import { log } from 'console'
 export class AccountController {
   constructor(private service: IAccountService) {
     this.service = service
@@ -12,7 +11,6 @@ export class AccountController {
   async getById(req: Request, res: Response) {
     try {
       const { id } = req.params
-      log(id)
       const account = await this.service.getById(Number(id))
       sendResponse(
         new ApiResponse({

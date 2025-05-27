@@ -38,7 +38,6 @@ export class Messages extends BaseEntity {
     enum: MESSAGESTATUS,
     default: MESSAGESTATUS.SENT
   })
-  
   status!: MESSAGESTATUS
   constructor(data?: Partial<Messages>) {
     super()

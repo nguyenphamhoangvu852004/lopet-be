@@ -6,3 +6,9 @@ declare module 'express-serve-static-core' {
     user?: UserPayload
   }
 }
+
+declare module 'express-serve-static-core' {
+  interface Response {
+    io?: Server
+  }
+}

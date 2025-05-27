@@ -1,6 +1,5 @@
 import IMessageService from '~/modules/message/services/IMessageService'
 import { Request, Response } from 'express'
-import { log } from 'console'
 import { CreateMessageInputDTO } from '~/modules/message/dto/CreateMessageDTO'
 import { handleControllerError } from '~/utils/handle.util'
 import cloudinary from '~/config/cloudinary'
@@ -76,7 +75,6 @@ export class MessageController {
   }
   async createMessage(req: Request, res: Response) {
     try {
-      log('📥 Body:', req.body)
       const image = req.file as Express.Multer.File
       let uploadedImage
 
@@ -92,12 +90,20 @@ export class MessageController {
       })
 
       const response = await this.service.createMessage(dto)
-
-      res.status(201).json({
-        status: 'success',
-        message: 'Message created successfully',
-        data: response
+      const receiverRoom = `user_${dto.receiverId}`
+      console.log('receiverRoom', receiverRoom)
+      res.io.to(receiverRoom).emit('chat messsage', {
+        message: response,
+        from: dto.senderId
       })
+      sendResponse(
+        new ApiResponse({
+          data: response,
+          res: res,
+          statusCode: httpStatusCode.CREATED,
+          message: 'Create message successfully'
+        })
+      )
     } catch (error) {
       handleControllerError(error, res)
     }

@@ -49,7 +49,6 @@ export default class AccountRepoImpl implements IAccountRepo {
     if (!account) {
       return null
     }
-    console.log(account)
     return account
   }
 
