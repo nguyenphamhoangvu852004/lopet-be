@@ -18,7 +18,8 @@ export class NotificationsRepoImpl implements INotificationRepo {
   async findById(id: number): Promise<Notifications | null> {
     const response = this.notificationRepo.findOne({
       where: { id: id },
-      relations: { actor: true, receptor: true }
+      relations: { actor: true, receptor: true },
+      withDeleted: true
     })
     if (!response) return null
     return response

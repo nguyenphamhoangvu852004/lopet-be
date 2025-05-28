@@ -1,4 +1,3 @@
-
 export class CreateNotificationInputDTO {
   actorId!: number
   receptorId!: number

@@ -3,10 +3,29 @@ import { handleControllerError } from '~/utils/handle.util'
 import { Request, Response } from 'express'
 import { CreateNotificationInputDTO } from '~/modules/notification/dto/Create'
 import { ApiResponse, sendResponse } from '~/response/api.response'
+import { UpdateNotificationInputDTO } from '~/modules/notification/dto/Update'
 
 export class NotificationController {
   constructor(private notificationService: INotificationService) {
     this.notificationService = notificationService
+  }
+  async getDetail(req: Request, res: Response) {
+    try {
+      const { id } = req.params
+      console.log('id', id)
+      const notification = await this.notificationService.getDetail(Number(id))
+      sendResponse(
+        new ApiResponse({
+          data: notification,
+          res: res,
+          statusCode: 200,
+          message: 'Get notification detail successfully'
+        })
+      )
+      return
+    } catch (error) {
+      handleControllerError(error, res)
+    }
   }
   async create(req: Request, res: Response) {
     try {
@@ -52,6 +71,30 @@ export class NotificationController {
           res: res,
           statusCode: 200,
           message: 'Get list notification successfully'
+        })
+      )
+      return
+    } catch (error) {
+      handleControllerError(error, res)
+    }
+  }
+  async update(req: Request, res: Response) {
+    try {
+      const { id } = req.params
+      const { status } = req.body
+
+      const response = await this.notificationService.updateStatus(
+        new UpdateNotificationInputDTO({
+          notificationId: Number(id),
+          status: status
+        })
+      )
+      sendResponse(
+        new ApiResponse({
+          data: response,
+          res: res,
+          statusCode: 200,
+          message: 'Update notification status successfully'
         })
       )
       return
