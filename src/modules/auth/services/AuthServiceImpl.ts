@@ -55,13 +55,14 @@ export default class AuthServiceImpl implements IAuthService {
       if (account) throw new Conflict()
       if (data.password !== data.confirmPassword) throw new BadRequest()
       const hashedPassword = await hashPassword(data.password)
-      const response: GetAccountOutputDTO = await this.accountRepo.create(
+      const response: GetAccountOutputDTO | null = await this.accountRepo.create(
         new Accounts({
           email: data.email,
           username: data.username,
           password: hashedPassword
         })
       )
+      if (!response) throw new BadRequest()
       return new RegisterOutputDTO({
         id: response.id,
         email: response.email,

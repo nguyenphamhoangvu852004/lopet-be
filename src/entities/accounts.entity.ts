@@ -36,7 +36,7 @@ export class Accounts extends BaseEntity {
 
   @OneToOne(() => Profiles, (profile) => profile.account, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'profileId' })
-  profile!: Profiles
+  profile!: Profiles | null
 
   @OneToMany(() => Groups, (group) => group.owner)
   groups!: Groups[]

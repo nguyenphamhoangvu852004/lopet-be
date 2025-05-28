@@ -77,7 +77,7 @@ export class AccountServiceImpl implements IAccountService {
         email: account.email,
         username: account.username,
         password: account.password,
-        profile: account.profile
+        profile: account.profile || null
       })
       return dto
     } catch (error) {
@@ -112,6 +112,7 @@ export class AccountServiceImpl implements IAccountService {
           createdAt: new Date()
         })
       )
+      if (!account) throw new BadRequest()
       const dto = new GetAccountOutputDTO({
         id: account.id,
         email: account.email,
@@ -128,8 +129,11 @@ export class AccountServiceImpl implements IAccountService {
   async setProfile(accountId: number, profile: CreateProfileOutputDTO): Promise<GetAccountOutputDTO> {
     try {
       // tìm kiếm caí account trong database
-      const account = await this.repo.findById(accountId)
+      const account: Accounts | null = await this.repo.findById(accountId)
       if (!account) throw new BadRequest()
+      if (!account.profile) {
+        throw new BadRequest('Account profile is null')
+      }
       const profile = new Profiles({
         id: account.profile.id,
         fullName: account.profile.fullName,

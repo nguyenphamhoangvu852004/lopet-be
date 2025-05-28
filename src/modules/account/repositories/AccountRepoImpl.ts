@@ -63,8 +63,11 @@ export default class AccountRepoImpl implements IAccountRepo {
       }
     })
   }
-  async create(data: Accounts): Promise<Accounts> {
+  async create(data: Accounts): Promise<Accounts|null> {
     const createdEntity = await this.accountsRepo.save(data)
+    if (!createdEntity) {
+      return null
+    }
     return createdEntity
   }
 
