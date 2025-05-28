@@ -1,12 +1,10 @@
 import { Router } from 'express'
 import { upload } from '~/config/multerConfig'
-import { validate } from '~/middlewares/validation.middleware'
 import AccountRepoImpl from '~/modules/account/repositories/AccountRepoImpl'
 import { AccountServiceImpl } from '~/modules/account/services/AccountServiceImpl'
 import { ProfileController } from '~/modules/profile/controller'
 import ProfileRepoImpl from '~/modules/profile/repositories/ProfileRepoImpl'
 import ProfileServiceImpl from '~/modules/profile/services/ProfileServiceImpl'
-import { profileValidation } from '~/validation/schema.validation'
 
 export const profileRouter = Router()
 
@@ -22,7 +20,6 @@ profileRouter.post(
     { name: 'avatar', maxCount: 1 },
     { name: 'cover', maxCount: 1 }
   ]),
-  validate(profileValidation),
   controller.create.bind(controller)
 )
 

@@ -7,6 +7,7 @@ import { emailRouter } from '~/routes/v1/email.route'
 import { friendShipRouter } from '~/routes/v1/friendShip.route'
 import { groupRouter } from '~/routes/v1/group.route'
 import { messageRouter } from '~/routes/v1/message.route'
+import { notificationRouter } from '~/routes/v1/notification.route'
 import { postRouter } from '~/routes/v1/post.route'
 import { profileRouter } from '~/routes/v1/profile.route'
 import { reportRouter } from '~/routes/v1/report.route'
@@ -26,3 +27,4 @@ router.use('/advertisements', advertisementRouter)
 router.use('/comments', commentRouter)
 router.use('/reports', reportRouter)
 router.use('/roles', roleRouter)
+router.use('/notifications', notificationRouter)

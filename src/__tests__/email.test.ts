@@ -19,7 +19,6 @@ afterAll(async () => {
 })
 
 it('send OTP to mail', async () => {
-  jest.setTimeout(20000)
   const req = await request(app).post('/emails').send({ email: 'nguyenphamhoangvu852004@gmail.com' })
   expect(req.status).toBe(200)
   expect(req.body.message).toBe('Send email successfully')
