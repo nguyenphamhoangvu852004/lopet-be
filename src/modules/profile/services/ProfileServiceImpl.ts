@@ -24,7 +24,10 @@ export default class ProfileServiceImpl implements IProfileService {
             phoneNumber: profile.phoneNumber,
             bio: profile.bio,
             avatarUrl: profile.avatarUrl,
-            coverUrl: profile.coverUrl
+            coverUrl: profile.coverUrl,
+            dateOfBirth: profile.dateOfBirth,
+            hometown: profile.hometown,
+            sex: profile.sex
           })
         )
       }
@@ -43,6 +46,9 @@ export default class ProfileServiceImpl implements IProfileService {
           bio: data.bio ?? '',
           avatarUrl: data.avatarUrl ?? '',
           coverUrl: data.coverUrl ?? '',
+          dateOfBirth: data.dateOfBirth ?? undefined,
+          hometown: data.hometown ?? undefined,
+          sex: data.sex ?? undefined,
           createdAt: new Date(),
           updatedAt: null,
           deletedAt: null
@@ -50,7 +56,17 @@ export default class ProfileServiceImpl implements IProfileService {
       )
 
       if (!newProfile) throw new BadRequest()
-      return new CreateProfileOutputDTO(newProfile)
+      return new CreateProfileOutputDTO({
+        id: newProfile.id,
+        fullName: newProfile.fullName,
+        phoneNumber: newProfile.phoneNumber,
+        bio: newProfile.bio,
+        avatarUrl: newProfile.avatarUrl,
+        coverUrl: newProfile.coverUrl,
+        dateOfBirth: newProfile.dateOfBirth,
+        hometown: newProfile.hometown,
+        sex: newProfile.sex
+      })
     } catch (error) {
       handleThrowError(error)
     }
@@ -75,7 +91,10 @@ export default class ProfileServiceImpl implements IProfileService {
         phoneNumber: response.phoneNumber,
         bio: response.bio,
         avatarUrl: response.avatarUrl,
-        coverUrl: response.coverUrl
+        coverUrl: response.coverUrl,
+        dateOfBirth: response.dateOfBirth,
+        hometown: response.hometown,
+        sex: response.sex
       })
     } catch (error) {
       handleThrowError(error)
@@ -90,6 +109,9 @@ export default class ProfileServiceImpl implements IProfileService {
       profile.bio = data.bio ?? profile.bio
       profile.avatarUrl = data.avatarUrl ?? profile.avatarUrl
       profile.coverUrl = data.coverUrl ?? profile.coverUrl
+      profile.sex = data.sex ?? profile.sex
+      profile.dateOfBirth = data.dateOfBirth ?? profile.dateOfBirth
+      profile.hometown = data.hometown ?? profile.hometown
       profile.updatedAt = new Date()
       await this.profileRepo.update(profile.id, profile)
       return new UpdateProfileOutputDTO(profile)

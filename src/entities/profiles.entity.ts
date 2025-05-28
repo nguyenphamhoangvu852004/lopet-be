@@ -25,6 +25,22 @@ export class Profiles extends BaseEntity {
     nullable: true
   })
   bio!: string
+  @Column({
+    type: 'tinyint',
+    nullable: true
+  })
+  sex!: number 
+  @Column({
+    type: 'date',
+    nullable: true
+  })
+  dateOfBirth!: Date
+
+  @Column({
+    type: 'varchar',
+    nullable: true
+  })
+  hometown!: string
 
   @Column({
     type: 'text',

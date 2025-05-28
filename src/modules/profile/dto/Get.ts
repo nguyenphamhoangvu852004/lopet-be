@@ -11,6 +11,9 @@ export class GetProfileOutputDTO {
   fullName!: string
   bio!: string
   phoneNumber!: string
+  dateOfBirth!: Date
+  hometown!: string
+  sex!: number
   avatarUrl!: string
   coverUrl!: string
   constructor(data?: Partial<GetProfileOutputDTO>) {

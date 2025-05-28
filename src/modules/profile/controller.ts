@@ -102,10 +102,14 @@ export class ProfileController {
           fullName: data.fullName,
           phoneNumber: data.phoneNumber,
           bio: data.bio,
+          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+          hometown: data.hometown,
+          sex: data.sex,
           avatarUrl: avatarUrl,
           coverUrl: coverUrl
         })
       )
+      // nếu không có profile thì ném lỗi
       if (!profile) throw new BadRequest()
       sendResponse(
         new ApiResponse({
@@ -154,7 +158,10 @@ export class ProfileController {
           phoneNumber: data.phoneNumber,
           bio: data.bio,
           avatarUrl: avatarUrl,
-          coverUrl: coverUrl
+          coverUrl: coverUrl,
+          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+          hometown: data.hometown,
+          sex: data.sex
         })
       )
       sendResponse(
