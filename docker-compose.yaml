@@ -6,8 +6,9 @@ services:
     container_name: mysql-docker
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: nguyenvu
-      MYSQL_DATABASE: socialmedia
+      - MYSQL_ROOT_PASSWORD=nguyenvu
+      - MYSQL_DATABASE=socialmedia
+      - MYSQL_PASSWORD=nguyenvu
     ports:
       - '3307:3306'
     networks:
@@ -23,11 +24,11 @@ services:
 
   backend:
     container_name: lopet-backend-build
+    # image: nguyenphamhoangvu852004/lopet-backend:latest
     build: .
+    restart: always
     env_file:
       - .env
-    environment:
-      - DATABASE_HOSTNAME=mysql-docker
     depends_on:
       - mysql-docker
       - redis
