@@ -130,7 +130,7 @@ export class ProfileController {
     try {
       const { id } = req.params
       const data = req.body
-      const files = req.files as {
+      const files = (req.files || {}) as {
         avatar?: Express.Multer.File[]
         cover?: Express.Multer.File[]
       }

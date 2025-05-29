@@ -3,9 +3,9 @@ import { logger } from './config/logger'
 
 async function main() {
   try {
-    startMysql()
-    startRedis()
-    startServer()
+    await startMysql()
+    await startRedis()
+    await startServer()
     process.on('SIGINT', async () => {
       logger.info('SIGINT received: stopping server...')
       await stopServer()

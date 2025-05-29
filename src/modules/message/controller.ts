@@ -16,7 +16,7 @@ export class MessageController {
   async getListMessage(req: Request, res: Response) {
     try {
       const { id } = req.params
-      const { targetId } = req.body
+      const { targetId } = req.query
 
       const inputDTO = new GetListMessageInputDTO({
         senderId: Number(id),

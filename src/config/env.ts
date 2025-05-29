@@ -7,7 +7,7 @@ export const environment = {
 
   DOMAIN_CORS: process.env.DOMAIN_CORS,
 
-  DATABASE_HOSTNAME: process.env.DATABASE_HOST,
+  DATABASE_HOSTNAME: process.env.DATABASE_HOSTNAME,
   DATABASE_PORT: Number(process.env.DATABASE_PORT),
   DATABASE_USERNAME: process.env.DATABASE_USERNAME,
   DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,

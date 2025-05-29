@@ -26,10 +26,14 @@ export async function startMysql() {
   try {
     await mySqlDataSource.initialize()
     logger.info('Database connected succesfully')
-    return
   } catch (error) {
-    logger.error((error as Error).message)
-    return
+    if (error instanceof AggregateError) {
+      for (const err of error.errors) {
+        logger.error('MySQL init error detail:', err)
+      }
+    } else {
+      logger.error('MySQL init error:', error)
+    }
   }
 }
 export async function stopMysql() {

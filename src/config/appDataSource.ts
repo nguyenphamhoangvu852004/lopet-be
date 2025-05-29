@@ -2,6 +2,7 @@ import { createClient } from 'redis'
 import { DataSource } from 'typeorm'
 import { environment } from '~/config/env'
 
+import path from 'path'
 export const mySqlDataSource = new DataSource({
   type: 'mysql',
   host: environment.DATABASE_HOSTNAME,
@@ -9,7 +10,7 @@ export const mySqlDataSource = new DataSource({
   username: environment.DATABASE_USERNAME,
   password: environment.DATABASE_PASSWORD,
   database: environment.DATABASE_NAME,
-  entities: [__dirname + '/../entities/*.entity.ts'],
+  entities: [path.join(__dirname, '/../entities/*.entity.{ts,js}')],
   synchronize: true,
   logging: false
   // subscribers: [],
