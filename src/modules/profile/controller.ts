@@ -77,8 +77,8 @@ export class ProfileController {
   }
   async create(req: Request, res: Response) {
     try {
-      const { fullName, phoneNumber, bio, dateOfBirth, hometown, sex } = req.body
-      const files = req.files as {
+      const data = req.body
+      const files = (req.files || {}) as {
         avatar?: Express.Multer.File[]
         cover?: Express.Multer.File[]
       }
@@ -99,14 +99,14 @@ export class ProfileController {
       }
       const profile: CreateProfileOutputDTO = await this.profileService.create(
         new CreateProfileInputDTO({
-          fullName: fullName ?? '',
-          phoneNumber: phoneNumber ?? '',
-          bio: bio ?? '',
-          dateOfBirth: dateOfBirth ?? '',
-          hometown: hometown ?? '',
-          sex: sex ?? '',
-          avatarUrl: avatarUrl ?? '',
-          coverUrl: coverUrl ?? ''
+          fullName: data.fullName,
+          phoneNumber: data.phoneNumber,
+          bio: data.bio,
+          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+          hometown: data.hometown,
+          sex: data.sex,
+          avatarUrl: avatarUrl,
+          coverUrl: coverUrl
         })
       )
       // nếu không có profile thì ném lỗi
