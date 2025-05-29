@@ -9,7 +9,8 @@ export class BaseEntity {
 
   @UpdateDateColumn({
     nullable: true,
-    comment: 'Thời gian cập nhật hàng dữ liệu'
+    comment: 'Thời gian cập nhật hàng dữ liệu',
+    default: null
   })
   updatedAt!: Date | null
 

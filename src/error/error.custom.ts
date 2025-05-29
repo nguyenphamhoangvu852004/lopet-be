@@ -5,7 +5,6 @@ export class HttpError extends Error {
   constructor(code: number, message: string) {
     super(message)
     this.code = code
-    this.name = new.target.name
   }
 }
 
@@ -16,8 +15,8 @@ export class NotFound extends HttpError {
 }
 
 export class BadRequest extends HttpError {
-  constructor() {
-    super(httpStatusCode.BAD_REQUEST, httpStatusMessage.BAD_REQUEST)
+  constructor(message?: string) {
+    super(httpStatusCode.BAD_REQUEST, message ?? httpStatusMessage.BAD_REQUEST)
   }
 }
 
@@ -26,6 +25,7 @@ export class Conflict extends HttpError {
     super(httpStatusCode.CONFLICT, httpStatusMessage.CONFLICT)
   }
 }
+
 export class InternalServerError extends HttpError {
   constructor() {
     super(httpStatusCode.INTERNAL_SERVER_ERROR, httpStatusMessage.INTERNAL_SERVER_ERROR)

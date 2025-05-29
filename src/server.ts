@@ -3,55 +3,122 @@ import core from 'express-serve-static-core'
 import { environment } from 'src/config/env'
 import { createServer } from 'node:http'
 import { Server } from 'socket.io'
-import { appDataSource } from '~/config/appDataSource'
+import { mySqlDataSource, redis } from '~/config/appDataSource'
 import { router } from '~/routes/index'
 import { logger } from '~/config/logger'
+import cors from 'cors'
+import { morganMiddleware } from '~/config/morgan'
+import { setupSocket } from '~/middlewares/socketio'
+
 const PORT = environment.APP_PORT
 const HOSTNAME = environment.APP_HOSTNAME
+export const app: core.Express = express()
+export const server = createServer(app)
+export const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+  }
+})
 
-export async function startDatabase() {
+const route: core.Router = express.Router()
+export async function startMysql() {
   try {
-    await appDataSource.initialize()
+    await mySqlDataSource.initialize()
     logger.info('Database connected succesfully')
+  } catch (error) {
+    if (error instanceof AggregateError) {
+      for (const err of error.errors) {
+        logger.error('MySQL init error detail:', err)
+      }
+    } else {
+      logger.error('MySQL init error:', error)
+    }
+  }
+}
+export async function stopMysql() {
+  try {
+    await mySqlDataSource.destroy()
+    logger.info('Database disconnected successfully')
+    return
+  } catch (error) {
+    logger.error((error as Error).message)
+    return
+  }
+}
+export async function startRedis() {
+  try {
+    const result = await redis.connect()
+    if (result) {
+      logger.info('Redis connected successfully')
+    }
+    await redis.set('test', 'Hello world')
+  } catch (error) {
+    logger.error('Redis connected error ', (error as Error).message)
+  }
+}
+export async function stopRedis() {
+  try {
+    await redis.disconnect()
+    logger.info('Redis disconnected successfully')
   } catch (error) {
     logger.error((error as Error).message)
   }
 }
 export async function startServer() {
-  const app: core.Express = express()
-  const route: core.Router = express.Router()
-  const server = createServer(app)
   app.use(express.json({ strict: true }))
-  const io = new Server(server, {
-    cors: {
+  app.use(express.urlencoded({ extended: true }))
+  app.use(
+    cors({
       origin: '*',
-      methods: ['GET', 'POST']
-    }
-  })
-
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'Access-Control-Allow-Origin',
+        'Access-Control-Allow-Headers',
+        'Access-Control-Allow-Methods'
+      ]
+    })
+  )
+  route.use(morganMiddleware)
   route.use('/v1', router)
 
-  io.on('connection', function (socket) {
-    console.log('a user connected', socket.id)
-    socket.on('register', function (msg) {
-      console.log(msg)
-    })
+  setupSocket(io)
 
-    socket.on('join room', function (room) {
-      socket.join(room)
-      console.log(`${socket.id} has joined room ${room}`)
-    })
+  app.use((req, res, next) => {
+    res.io = io
+    next()
+  })
+  app.use(route)
 
-    socket.on('private message', function (data) {
-      const { to, from, message, room } = data
-      console.log(`${from} to ${to}: ${message}`)
-      socket.to(room).emit('private message', { from, to, message })
+  await new Promise<void>((resolve) => {
+    server.listen(PORT, async () => {
+      logger.info(`Server started at ${HOSTNAME}:${PORT}`)
+      resolve()
     })
   })
-
-  app.use(route)
-  await startDatabase()
-  server.listen(PORT, function () {
-    logger.info(`Server started at ${HOSTNAME}:${PORT}`)
+}
+export async function stopServer() {
+  return new Promise<void>((resolve, reject) => {
+    const shutdown = async () => {
+      try {
+        await stopMysql()
+        await stopRedis()
+        server.close((err) => {
+          if (err) {
+            logger.error('Error closing server', err)
+            reject(err)
+            return
+          }
+          logger.info('Server stopped successfully')
+          resolve()
+        })
+      } catch (error) {
+        logger.error((error as Error).message)
+        reject(error)
+      }
+    }
+    shutdown()
   })
 }

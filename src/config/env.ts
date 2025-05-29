@@ -5,13 +5,15 @@ export const environment = {
   APP_PORT: Number(process.env.APP_PORT),
   APP_HOSTNAME: process.env.APP_HOSTNAME,
 
-  DATABASE_HOSTNAME: process.env.DATABASE_HOST,
+  DOMAIN_CORS: process.env.DOMAIN_CORS,
+
+  DATABASE_HOSTNAME: process.env.DATABASE_HOSTNAME,
   DATABASE_PORT: Number(process.env.DATABASE_PORT),
   DATABASE_USERNAME: process.env.DATABASE_USERNAME,
   DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,
   DATABASE_NAME: process.env.DATABASE_NAME,
 
-  LOG_LEVEL: process.env.LOG_LEVEL || 'info',
+  LOG_LEVEL: process.env.LOG_LEVEL,
 
   ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET,
   REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET,
@@ -22,5 +24,12 @@ export const environment = {
   MAIL_PORT: Number(process.env.MAIL_PORT),
   MAIL_USER: process.env.MAIL_USER,
   MAIL_PASS: process.env.MAIL_PASS,
-  MAIL_ADMIN_RECEIVER: process.env.MAIL_ADMIN_RECEIVER
+  MAIL_ADMIN_RECEIVER: process.env.MAIL_ADMIN_RECEIVER,
+
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+
+  REDIS_HOSTNAME: process.env.REDIS_HOSTNAME,
+  REDIS_PORT: Number(process.env.REDIS_PORT)
 }

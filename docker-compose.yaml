@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mysql-docker:
+    image: mysql:8.0
+    container_name: mysql-docker
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=nguyenvu
+      - MYSQL_DATABASE=socialmedia
+      - MYSQL_PASSWORD=nguyenvu
+    ports:
+      - '3307:3306'
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - '6379:6379'
+    networks:
+      - app-network
+
+  backend:
+    container_name: lopet-backend-build
+    # image: nguyenphamhoangvu852004/lopet-backend:latest
+    build: .
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - mysql-docker
+      - redis
+    ports:
+      - '8080:8080'
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

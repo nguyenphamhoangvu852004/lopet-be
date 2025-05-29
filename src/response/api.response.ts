@@ -1,13 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Response } from 'express'
-interface IResponse {
-  send(res: Response, statusCode: number, data: any): void
-}
-export class SuccesstionResponseImpl implements IResponse {
-  send(res: Response, statusCode: number, data: any): void {
-    res.status(statusCode).json(data)
-    return
-  }
-}
 
 export class ApiResponse {
   res!: Response
@@ -18,15 +10,6 @@ export class ApiResponse {
     Object.assign(this, data)
   }
 }
-
-// export function sendResponse(data: ApiResponse): void {
-//     data.res.status(data.statusCode).json({
-//         statusCode: data.statusCode,
-//         message: data.message,
-//         data: data.data
-//     })
-//     return
-// }
 
 export function sendResponse(data: ApiResponse): void {
   data.res.status(data.statusCode).json({

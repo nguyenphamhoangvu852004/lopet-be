@@ -1,11 +1,12 @@
-import { log } from 'console'
+import { redis } from '~/config/appDataSource'
 import { Accounts } from '~/entities/accounts.entity'
 import { BadRequest, Conflict, NotFound } from '~/error/error.custom'
-import { CreateAccountDTO } from '~/modules/account/dto/Create'
 import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
+import { VerifyAccountInputDTO, VerifyAccountOutputDTO } from '~/modules/auth/dto/ForgotPassword'
 import { LoginInputDTO, LoginOutputDTO } from '~/modules/auth/dto/Login'
 import { RegisterInputDTO, RegisterOutputDTO } from '~/modules/auth/dto/Register'
+import { ResetPasswordInputDto, ResetPasswordOutputDto } from '~/modules/auth/dto/ResetPassword'
 import IAuthService from '~/modules/auth/services/IAuthService'
 import { comparePassword, hashPassword } from '~/utils/bcryptjs.util'
 import { handleThrowError } from '~/utils/handle.util'
@@ -45,24 +46,65 @@ export default class AuthServiceImpl implements IAuthService {
   }
   async register(data: RegisterInputDTO): Promise<RegisterOutputDTO> {
     try {
-      log(data)
+      const isVerified = await redis.get(`email_verified:${data.email}`)
+      if (!isVerified) {
+        throw new BadRequest('Bạn cần xác thực OTP trước khi đăng ký.')
+      }
+      await redis.del(`email_verified:${data.email}`)
       const account = await this.accountRepo.findByEmail(data.email)
-      log(account)
       if (account) throw new Conflict()
       if (data.password !== data.confirmPassword) throw new BadRequest()
       const hashedPassword = await hashPassword(data.password)
-      const response: GetAccountOutputDTO = await this.accountRepo.create(
+      const response: GetAccountOutputDTO | null = await this.accountRepo.create(
         new Accounts({
           email: data.email,
           username: data.username,
           password: hashedPassword
         })
       )
+      if (!response) throw new BadRequest()
       return new RegisterOutputDTO({
         id: response.id,
         email: response.email,
         username: response.username
       })
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
+  async resetPassword(data: ResetPasswordInputDto): Promise<ResetPasswordOutputDto> {
+    try {
+      // Validate: password & confirm
+      if (data.password !== data.confirmPassword) {
+        throw new BadRequest('Mật khẩu xác nhận không khớp')
+      }
+
+      const account = await this.accountRepo.findByEmail(data.email)
+      if (!account) throw new NotFound()
+
+      const hashedPassword = await hashPassword(data.password)
+      account.password = hashedPassword
+
+      const response = await this.accountRepo.update(account)
+      if (!response) throw new BadRequest()
+
+      return new ResetPasswordOutputDto({
+        id: response.id,
+        email: response.email,
+        username: response.username
+      })
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
+
+  async verifyAccount(data: VerifyAccountInputDTO): Promise<VerifyAccountOutputDTO> {
+    try {
+      const account = await this.accountRepo.findByEmail(data.email)
+      if (!account) throw new NotFound()
+      if (!(await comparePassword(data.password, account.password))) throw new BadRequest()
+      return new VerifyAccountOutputDTO({ isValid: true })
     } catch (error) {
       handleThrowError(error)
     }
