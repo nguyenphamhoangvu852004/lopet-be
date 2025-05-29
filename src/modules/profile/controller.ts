@@ -105,8 +105,8 @@ export class ProfileController {
           dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
           hometown: data.hometown,
           sex: data.sex,
-          avatarUrl: avatarUrl,
-          coverUrl: coverUrl
+          avatarUrl: avatarUrl ?? '',
+          coverUrl: coverUrl ?? ''
         })
       )
       // nếu không có profile thì ném lỗi

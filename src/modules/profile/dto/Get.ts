@@ -8,14 +8,14 @@ export class GetListInputDTO {
 
 export class GetProfileOutputDTO {
   id!: number
-  fullName!: string
-  bio!: string
-  phoneNumber!: string
-  dateOfBirth!: Date
-  hometown!: string
-  sex!: number
-  avatarUrl!: string
-  coverUrl!: string
+  fullName?: string
+  bio?: string
+  phoneNumber?: string
+  dateOfBirth?: Date
+  hometown?: string
+  sex?: number
+  avatarUrl?: string
+  coverUrl?: string
   constructor(data?: Partial<GetProfileOutputDTO>) {
     Object.assign(this, data)
   }

@@ -73,7 +73,10 @@ export class CommentServiceImpl implements ICommentService {
           coverUrl: profile?.coverUrl ?? '',
           bio: profile?.bio ?? '',
           fullName: profile?.fullName ?? '',
-          phoneNumber: profile?.phoneNumber ?? ''
+          phoneNumber: profile?.phoneNumber ?? '',
+          sex: profile?.sex ?? 0,
+          dateOfBirth: profile?.dateOfBirth ?? new Date(),
+          hometown: profile?.hometown ?? ''
         }
         dtoComment.createdAt = comment.createdAt
         dtoComment.account = account
