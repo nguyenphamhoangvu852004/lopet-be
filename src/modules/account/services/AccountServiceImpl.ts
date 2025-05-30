@@ -41,11 +41,14 @@ export class AccountServiceImpl implements IAccountService {
         id: account.id,
         email: account.email,
         username: account.username,
-        password: account.password
+        password: account.password,
+        roles: []
       })
+      for (const role of account.roles) dto.roles.push(role.name)
       if (!account.profile) {
         return dto
       }
+
       const profileDto = new GetProfileOutputDTO({
         id: account.profile.id,
         fullName: account.profile.fullName,

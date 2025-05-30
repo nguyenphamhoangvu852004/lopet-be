@@ -89,6 +89,17 @@ export class NotificationController {
           status: status
         })
       )
+
+      res.io.to(`object_${id}`).emit('change status', {
+        notificationId: response.notificationId,
+        actorId: response.actorId,
+        receptorId: response.receptorId,
+        content: response.content,
+        type: response.type,
+        status: response.status,
+        createdAt: response.createdAt
+      })
+
       sendResponse(
         new ApiResponse({
           data: response,

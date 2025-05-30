@@ -5,6 +5,7 @@ export class GetAccountOutputDTO {
   email!: string
   username!: string
   password!: string
+  roles!: string[]
   profile?: GetProfileOutputDTO | null
   constructor(data?: Partial<GetAccountOutputDTO>) {
     Object.assign(this, data)

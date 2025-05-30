@@ -15,9 +15,9 @@ interface UserPayload {
 export function verifyRole(requiedRoles: ROLENAME[]) {
   return function (req: Request, res: Response, next: NextFunction) {
     try {
-      const userRoles = (req.user as UserPayload).roles.map((role) => role.name)
+      const userRoles = (req.user as UserPayload).roles.map((role) => role)
 
-      const hasPermission = requiedRoles.some((role) => userRoles.includes(role))
+      const hasPermission = requiedRoles.some((role) => role)
       log('hasPermission', hasPermission)
       log('userRoles', userRoles)
       if (!hasPermission) {
