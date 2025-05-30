@@ -26,8 +26,8 @@ export class AuthController {
         new ApiResponse({
           res: res,
           data: result,
-          message: httpStatusMessage.CREATED,
-          statusCode: httpStatusCode.CREATED
+          message: httpStatusMessage.OK,
+          statusCode: httpStatusCode.OK
         })
       )
     } catch (error) {

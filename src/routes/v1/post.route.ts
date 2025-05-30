@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { upload } from '~/config/multerConfig'
+import { verifyToken } from '~/middlewares/verifyToken'
 import AccountRepoImpl from '~/modules/account/repositories/AccountRepoImpl'
 import GroupRepoImpl from '~/modules/group/repositories/GroupRepoImpl'
 import { PostController } from '~/modules/post/controller'
@@ -24,6 +25,7 @@ postRouter.get('/:id', controller.getById.bind(controller))
 postRouter.get('/accounts/:id', controller.getByAccountId.bind(controller))
 postRouter.post(
   '/',
+  verifyToken(),
   upload.fields([
     { name: 'images', maxCount: 5 },
     { name: 'videos', maxCount: 5 }
@@ -31,12 +33,13 @@ postRouter.post(
   controller.create.bind(controller)
 )
 
-postRouter.delete('/:id', controller.delete.bind(controller))
+postRouter.delete('/:id', verifyToken(), controller.delete.bind(controller))
 
-postRouter.post('/like', controller.like.bind(controller))
-postRouter.post('/unlike', controller.unlike.bind(controller))
+postRouter.post('/like', verifyToken(), controller.like.bind(controller))
+postRouter.post('/unlike', verifyToken(), controller.unlike.bind(controller))
 postRouter.put(
   '/:postId',
+  verifyToken(),
   upload.fields([
     { name: 'images', maxCount: 5 },
     { name: 'videos', maxCount: 5 }

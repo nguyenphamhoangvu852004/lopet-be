@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { upload } from '~/config/multerConfig'
+import { verifyToken } from '~/middlewares/verifyToken'
 import AccountRepoImpl from '~/modules/account/repositories/AccountRepoImpl'
 import { CommentController } from '~/modules/comment/controller'
 import { CommentRepoImpl } from '~/modules/comment/repositories/CommentRepoImpl'
@@ -15,6 +16,6 @@ const service = new CommentServiceImpl(commentRepo, accountRepo, postRepo, profi
 const controller = new CommentController(service)
 export const commentRouter = Router()
 
-commentRouter.post('/', upload.single('image'), controller.create.bind(controller))
+commentRouter.post('/', verifyToken(), upload.single('image'), controller.create.bind(controller))
 commentRouter.get('/:postId', controller.getCommentAllFromPost.bind(controller))
-commentRouter.delete('/:commentId', controller.delete.bind(controller))
+commentRouter.delete('/:commentId', verifyToken(), controller.delete.bind(controller))

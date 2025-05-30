@@ -25,4 +25,7 @@ export default class RoleController {
       handleControllerError(error, res)
     }
   }
+  async createRoles() {
+    await this.roleService.createRoles()
+  }
 }
