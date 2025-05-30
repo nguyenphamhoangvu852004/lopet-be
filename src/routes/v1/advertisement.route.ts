@@ -17,7 +17,7 @@ const accountRepo = new AccountRepoImpl()
 const service = new AdvertisementServiceImpl(adRepo, accountRepo)
 const controller = new AdvertisementController(service)
 
-const ROLE_HAS_PERMISSION = [ROLENAME.ADMIN, ROLENAME.ADMIN]
+const ROLE_HAS_PERMISSION = [ROLENAME.ADMIN, ROLENAME.ADS]
 
 advertisementRouter.get('/', controller.getList.bind(controller))
 advertisementRouter.get('/:id', controller.getDetail.bind(controller))
