@@ -18,4 +18,4 @@ accountRouter.post('/ban/:id', verifyToken(), verifyRole(ROLE_HAS_PERMISSION), c
 accountRouter.post('/unban/:id', verifyToken(), verifyRole(ROLE_HAS_PERMISSION), controller.unbanId.bind(controller))
 accountRouter.delete('/:id', verifyToken(), verifyRole(ROLE_HAS_PERMISSION), controller.delete.bind(controller))
 accountRouter.get('/suggest/:id', verifyToken(), controller.getSuggest.bind(controller))
-accountRouter.put('/', verifyToken(), verifyRole(ROLE_HAS_PERMISSION), controller.setRolesToAccount.bind(controller))
+accountRouter.put('/', verifyToken(), controller.setRolesToAccount.bind(controller))
