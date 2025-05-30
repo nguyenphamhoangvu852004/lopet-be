@@ -30,8 +30,9 @@ export default class AuthServiceImpl implements IAuthService {
         const payload: UserPayload = {
           id: account.id,
           email: account.email,
-          roles: account.roles.map((role) => role.name)
+          roles: []
         }
+        for (const role of account.roles) payload.roles.push(role.name) //account.roles
         console.log(payload)
         const accessToken = generateAccessToken(payload)
         const refreshToken = generateRefreshToken(payload)
@@ -57,7 +58,7 @@ export default class AuthServiceImpl implements IAuthService {
       if (account) throw new Conflict()
       if (data.password !== data.confirmPassword) throw new BadRequest()
       const hashedPassword = await hashPassword(data.password)
-      const response: GetAccountOutputDTO | null = await this.accountRepo.create(
+      const response: Accounts | null = await this.accountRepo.create(
         new Accounts({
           email: data.email,
           username: data.username,

@@ -44,7 +44,8 @@ export default class AccountRepoImpl implements IAccountRepo {
     const account = await this.accountsRepo.findOne({
       where: { id: id },
       relations: {
-        profile: true
+        profile: true,
+        roles: true
       }
     })
     if (!account) {
