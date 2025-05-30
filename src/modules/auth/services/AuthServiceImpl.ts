@@ -10,7 +10,7 @@ import { ResetPasswordInputDto, ResetPasswordOutputDto } from '~/modules/auth/dt
 import IAuthService from '~/modules/auth/services/IAuthService'
 import { comparePassword, hashPassword } from '~/utils/bcryptjs.util'
 import { handleThrowError } from '~/utils/handle.util'
-import { generateAccessToken, generateRefreshToken } from '~/utils/jwt.util'
+import { generateAccessToken, generateRefreshToken, UserPayload } from '~/utils/jwt.util'
 
 export default class AuthServiceImpl implements IAuthService {
   constructor(private accountRepo: IAccountRepo) {
@@ -27,10 +27,12 @@ export default class AuthServiceImpl implements IAuthService {
         throw new BadRequest()
       } else {
         // tạo token ở đây để trả về
-        const payload = {
+        const payload: UserPayload = {
           id: account.id,
-          email: account.email
+          email: account.email,
+          roles: account.roles.map((role) => role.name)
         }
+        console.log(payload)
         const accessToken = generateAccessToken(payload)
         const refreshToken = generateRefreshToken(payload)
         const result = new LoginOutputDTO({
