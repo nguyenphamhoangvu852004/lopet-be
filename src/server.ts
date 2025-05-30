@@ -42,7 +42,7 @@ export async function stopMysql() {
     logger.info('Database disconnected successfully')
     return
   } catch (error) {
-    logger.error((error as Error).message)
+    logger.error(error)
     return
   }
 }
@@ -54,7 +54,7 @@ export async function startRedis() {
     }
     await redis.set('test', 'Hello world')
   } catch (error) {
-    logger.error('Redis connected error ', (error as Error).message)
+    logger.error('Redis connected error ', error)
   }
 }
 export async function stopRedis() {
@@ -62,7 +62,7 @@ export async function stopRedis() {
     await redis.disconnect()
     logger.info('Redis disconnected successfully')
   } catch (error) {
-    logger.error((error as Error).message)
+    logger.error(error)
   }
 }
 export async function startServer() {
@@ -115,7 +115,7 @@ export async function stopServer() {
           resolve()
         })
       } catch (error) {
-        logger.error((error as Error).message)
+        logger.error(error)
         reject(error)
       }
     }

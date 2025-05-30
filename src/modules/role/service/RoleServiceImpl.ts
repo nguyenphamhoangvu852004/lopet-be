@@ -20,4 +20,12 @@ export default class RoleServiceImpl implements IRoleService {
       handleThrowError(error)
     }
   }
+  async createRoles(): Promise<any> {
+    try {
+      const list = await this.repo.createRoles()
+      return list
+    } catch (error) {
+      handleThrowError(error)
+    }
+  }
 }

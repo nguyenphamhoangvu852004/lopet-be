@@ -28,7 +28,7 @@ services:
     build: .
     restart: always
     env_file:
-      - .env
+      - .build.env
     depends_on:
       - mysql-docker
       - redis
