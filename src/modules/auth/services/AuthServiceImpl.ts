@@ -1,6 +1,6 @@
 import { redis } from '~/config/appDataSource'
 import { Accounts } from '~/entities/accounts.entity'
-import { BadRequest, Conflict, NotFound } from '~/error/error.custom'
+import { BadRequest, Conflict, Forbidden, NotFound } from '~/error/error.custom'
 import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { VerifyAccountInputDTO, VerifyAccountOutputDTO } from '~/modules/auth/dto/ForgotPassword'
@@ -23,6 +23,7 @@ export default class AuthServiceImpl implements IAuthService {
       const account = await this.accountRepo.findByUsername(data.username)
       // có tài khoản thì nó so sanhs passsword
       if (!account) throw new NotFound()
+      if (account.isBanned == 1) throw new Forbidden(`Người dùng ${account.username} đã bị khoá`)
       if (!(await comparePassword(data.password, account.password))) {
         throw new BadRequest()
       } else {
