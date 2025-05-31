@@ -9,6 +9,8 @@ import { logger } from '~/config/logger'
 import cors from 'cors'
 import { morganMiddleware } from '~/config/morgan'
 import { setupSocket } from '~/middlewares/socketio'
+import InitAdmin from '~/modules/admin/init.admin'
+import InitRole from '~/modules/role/init.role'
 
 const PORT = environment.APP_PORT
 const HOSTNAME = environment.APP_HOSTNAME
@@ -91,6 +93,10 @@ export async function startServer() {
     next()
   })
   app.use(route)
+
+  new InitRole()
+  const newInitAdmin = new InitAdmin()
+  newInitAdmin.init()
 
   await new Promise<void>((resolve) => {
     server.listen(PORT, async () => {

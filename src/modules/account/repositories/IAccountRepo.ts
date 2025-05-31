@@ -1,6 +1,7 @@
 import { Accounts } from '~/entities/accounts.entity'
 
 export default interface IAccountRepo {
+  checkAccountExistByEmail(accountId: string): Promise<boolean>
   setRolesToAccount(userId: number, roles: string[]): Promise<Accounts>
   findById(id: number): Promise<Accounts | null>
   findByEmail(email: string): Promise<Accounts | null>

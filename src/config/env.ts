@@ -31,5 +31,9 @@ export const environment = {
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
 
   REDIS_HOSTNAME: process.env.REDIS_HOSTNAME,
-  REDIS_PORT: Number(process.env.REDIS_PORT)
+  REDIS_PORT: Number(process.env.REDIS_PORT),
+
+  INIT_ADMIN_EMAIL: process.env.INIT_ADMIN_EMAIL,
+  INIT_ADMIN_USERNAME: process.env.INIT_ADMIN_USERNAME,
+  INIT_ADMIN_PASSWORD: process.env.INIT_ADMIN_PASSWORD
 }

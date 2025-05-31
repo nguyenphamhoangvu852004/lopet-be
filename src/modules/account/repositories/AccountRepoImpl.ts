@@ -19,6 +19,13 @@ export default class AccountRepoImpl implements IAccountRepo {
     this.friendShipRepo = mySqlDataSource.getRepository(FriendShips)
     this.roleRepo = mySqlDataSource.getRepository(Roles)
   }
+  async checkAccountExistByEmail(email: string): Promise<boolean> {
+    const account = await this.accountsRepo.findOneBy({ email: email })
+    if (account) {
+      return true
+    }
+    return false
+  }
   async setRolesToAccount(userId: number, roles: string[]): Promise<Accounts> {
     try {
       const account = await this.accountsRepo.findOneBy({ id: userId })
@@ -64,7 +71,7 @@ export default class AccountRepoImpl implements IAccountRepo {
       }
     })
   }
-  async create(data: Accounts): Promise<Accounts|null> {
+  async create(data: Accounts): Promise<Accounts | null> {
     const createdEntity = await this.accountsRepo.save(data)
     if (!createdEntity) {
       return null

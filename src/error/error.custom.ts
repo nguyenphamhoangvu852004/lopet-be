@@ -21,8 +21,8 @@ export class BadRequest extends HttpError {
 }
 
 export class Conflict extends HttpError {
-  constructor() {
-    super(httpStatusCode.CONFLICT, httpStatusMessage.CONFLICT)
+  constructor(message?: string) {
+    super(httpStatusCode.CONFLICT, message ?? httpStatusMessage.CONFLICT)
   }
 }
 
