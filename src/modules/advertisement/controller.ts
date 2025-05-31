@@ -89,7 +89,7 @@ export class AdvertisementController {
   }
   async update(req: Request, res: Response) {
     try {
-      const { accountId, title, description, linkRef } = req.body
+      const { accountId, title, linkRef, description } = req.body
       const { adsId } = req.params
       const image = req.file as Express.Multer.File
 

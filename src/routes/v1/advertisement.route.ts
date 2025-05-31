@@ -30,5 +30,12 @@ advertisementRouter.post(
   controller.create.bind(controller)
 )
 
-advertisementRouter.put('/:id', verifyToken(), verifyRole(ROLE_HAS_PERMISSION), controller.update.bind(controller))
+advertisementRouter.put(
+  '/:adsId',
+  verifyToken(),
+  verifyRole(ROLE_HAS_PERMISSION),
+  upload.single('image'),
+  controller.update.bind(controller)
+)
+
 advertisementRouter.delete('/:id', verifyToken(), verifyRole(ROLE_HAS_PERMISSION), controller.delete.bind(controller))

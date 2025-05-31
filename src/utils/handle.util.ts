@@ -6,6 +6,7 @@ import { logger } from '~/config/logger'
 export function handleThrowError(error: unknown): never {
   logger.error(`${error}`)
   if (error instanceof HttpError) {
+    logger.error(`${error}`)
     throw error
   } else {
     throw new InternalServerError()
@@ -15,6 +16,7 @@ export function handleThrowError(error: unknown): never {
 export function handleControllerError(error: unknown, res: Response) {
   logger.error(`${error}`)
   if (error instanceof HttpError) {
+    logger.error(`${error}`)
     sendResponse(
       new ApiResponse({
         res,
