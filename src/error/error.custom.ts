@@ -26,6 +26,12 @@ export class Conflict extends HttpError {
   }
 }
 
+export class Forbidden extends HttpError {
+  constructor(message?: string) {
+    super(httpStatusCode.FORBIDDEN, message ?? httpStatusMessage.FORBIDDEN)
+  }
+}
+
 export class InternalServerError extends HttpError {
   constructor() {
     super(httpStatusCode.INTERNAL_SERVER_ERROR, httpStatusMessage.INTERNAL_SERVER_ERROR)
