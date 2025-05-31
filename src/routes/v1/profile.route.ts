@@ -17,7 +17,6 @@ const controller = new ProfileController(profileService, accountService)
 
 profileRouter.post(
   '/',
-  verifyToken(),
   upload.fields([
     { name: 'avatar', maxCount: 1 },
     { name: 'cover', maxCount: 1 }
