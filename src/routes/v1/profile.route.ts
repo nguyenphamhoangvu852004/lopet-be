@@ -25,7 +25,7 @@ profileRouter.post(
 )
 
 profileRouter.get('/', controller.getList.bind(controller))
-profileRouter.post('/:id', verifyToken(), controller.setToAccount.bind(controller))
+profileRouter.post('/:id', controller.setToAccount.bind(controller))
 profileRouter.get('/:id', controller.getById.bind(controller))
 profileRouter.get('/accounts/:id', controller.getByAccountId.bind(controller))
 
