@@ -17,7 +17,7 @@ export default class EmailServiceImpl implements IEmailService {
       const otp = generateOTP()
 
       // Lưu OTP vào Redis với TTL 2 phút (120 giây)
-      await redis.set(otpKey, otp, { EX: 60 })
+      await redis.set(otpKey, otp, { EX: 120 })
 
       // Gửi email
       const response = await transporter.sendMail({
@@ -56,7 +56,7 @@ export default class EmailServiceImpl implements IEmailService {
 
       // Sau khi xác thực, xoá OTP và set flag verified
       await redis.del(otpKey)
-      await redis.set(`email_verified:${email}`, 'true', { EX: 300 }) // TTL: 10 phút
+      await redis.set(`email_verified:${email}`, 'true', { EX: 300 }) // TTL: 5 phút
     } catch (error) {
       handleThrowError(error)
     }
