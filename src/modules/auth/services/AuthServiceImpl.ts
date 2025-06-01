@@ -3,6 +3,7 @@ import { Accounts } from '~/entities/accounts.entity'
 import { BadRequest, Conflict, Forbidden, NotFound } from '~/error/error.custom'
 import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
+import { AccountServiceImpl } from '~/modules/account/services/AccountServiceImpl'
 import { VerifyAccountInputDTO, VerifyAccountOutputDTO } from '~/modules/auth/dto/ForgotPassword'
 import { LoginInputDTO, LoginOutputDTO } from '~/modules/auth/dto/Login'
 import { RegisterInputDTO, RegisterOutputDTO } from '~/modules/auth/dto/Register'
@@ -23,6 +24,7 @@ export default class AuthServiceImpl implements IAuthService {
       const account = await this.accountRepo.findByUsername(data.username)
       // có tài khoản thì nó so sanhs passsword
       if (!account) throw new NotFound()
+
       if (account.isBanned == 1) throw new Forbidden(`Người dùng ${account.username} đã bị khoá`)
       if (!(await comparePassword(data.password, account.password))) {
         throw new BadRequest()
@@ -55,8 +57,12 @@ export default class AuthServiceImpl implements IAuthService {
         throw new BadRequest('Bạn cần xác thực OTP trước khi đăng ký.')
       }
       await redis.del(`email_verified:${data.email}`)
-      const account = await this.accountRepo.findByEmail(data.email)
+      const account: Accounts | null = await this.accountRepo.findByEmail(data.email)
+      const accountUsername: Accounts | null = await this.accountRepo.findByUsername(data.username)
+
       if (account) throw new Conflict()
+      if (accountUsername) throw new Conflict()
+
       if (data.password !== data.confirmPassword) throw new BadRequest()
       const hashedPassword = await hashPassword(data.password)
       const response: Accounts | null = await this.accountRepo.create(
