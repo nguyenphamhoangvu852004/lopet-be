@@ -10,7 +10,6 @@ export default class EmailServiceImpl implements IEmailService {
     try {
       const otpKey = `otp:${email}`
 
-      // Kiểm tra có OTP tồn tại chưa (Redis trả về null nếu không tồn tại)
       const existingOtp = await redis.get(otpKey)
       if (existingOtp) throw new BadRequest()
 
@@ -37,6 +36,7 @@ export default class EmailServiceImpl implements IEmailService {
     </div>
   `
       })
+      if (!response) throw new BadRequest('Send email failed')
       console.log(response)
       return
     } catch (error) {
@@ -57,6 +57,7 @@ export default class EmailServiceImpl implements IEmailService {
       // Sau khi xác thực, xoá OTP và set flag verified
       await redis.del(otpKey)
       await redis.set(`email_verified:${email}`, 'true', { EX: 300 }) // TTL: 5 phút
+      return
     } catch (error) {
       handleThrowError(error)
     }

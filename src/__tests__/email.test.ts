@@ -1,64 +1,67 @@
+import { redis } from '~/config/appDataSource'
+import EmailServiceImpl from '~/modules/email/services/EmailServiceImpl'
+import { transporter } from '~/config/emailConfig'
+
 jest.mock('~/config/appDataSource', () => ({
   redis: {
+    connect: jest.fn(),
+    set: jest.fn(),
     get: jest.fn(),
     del: jest.fn(),
-    set: jest.fn(),
-    connect: jest.fn()
+    disconnect: jest.fn()
+  },
+  mySqlDataSource: {}
+}))
+
+jest.mock('~/config/emailConfig', () => ({
+  transporter: {
+    sendMail: jest.fn()
   }
 }))
-import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
-import AuthServiceImpl from '~/modules/auth/services/AuthServiceImpl'
-import { RegisterInputDTO } from '~/modules/auth/dto/Register'
-import { redis } from '~/config/appDataSource'
-describe('create an account', () => {
-  let authService: AuthServiceImpl
-  let mockRepo: jest.Mocked<IAccountRepo>
 
+// jest.mock('~/utils/handle.util', () => ({
+//   handleThrowError: jest.fn((err) => {
+//     throw err
+//   })
+// }))
+
+describe('send otp', () => {
   beforeEach(() => {
-    mockRepo = {
-      create: jest.fn(),
-      findByEmail: jest.fn()
-    } as any
-    authService = new AuthServiceImpl(mockRepo)
+    jest.clearAllMocks()
   })
+  test('should send otp to email', async () => {
+    ;(redis.get as jest.Mock).mockResolvedValue(null)
+    ;(redis.set as jest.Mock).mockResolvedValue(true)
+    ;(transporter.sendMail as jest.Mock).mockResolvedValue(true)
 
-  it('should register successfully when email is verified', async () => {
-    ;(redis.get as jest.Mock).mockResolvedValue('true')
-    ;(redis.del as jest.Mock).mockResolvedValue(1)
-    mockRepo.findByEmail.mockResolvedValue(null)
-    mockRepo.create.mockResolvedValue({
-      id: 1,
-      advertisements: [],
-      email: 'test@mail.com',
-      username: 'testuser',
-      comments: [],
-      createdAt: new Date(),
-      deletedAt: null,
-      isBanned: 0,
-      groups: [],
-      memberGroups: [],
-      password: 'dsaklfja',
-      postlikes: [],
-      posts: [],
-      profile: null,
-      receivedFriendRequests: [],
-      reports: [],
-      roles: [],
-      sentFriendRequests: [],
-      updatedAt: new Date()
-    })
+    const emailService = new EmailServiceImpl()
 
-    const input = new RegisterInputDTO({
-      email: 'test@mail.com',
-      username: 'testuser',
-      password: '123456',
-      confirmPassword: '123456'
-    })
+    await expect(emailService.sendOTP('nphv852004@gmail.com')).resolves.toBeUndefined()
 
-    const result = await authService.register(input)
+    expect(redis.get).toHaveBeenCalledTimes(1)
+    expect(redis.set).toHaveBeenCalledTimes(1)
+    expect(transporter.sendMail).toHaveBeenCalledTimes(1)
+  })
+})
+// expect(undefined).toBeUndefined()  // pass
+// expect(null).toBeUndefined()       // fail
+// expect(0).toBeUndefined()          // fail
+// expect('hello').toBeUndefined()    // fail
+describe('verify otp', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+  test('should verify otp', async () => {
+    ;(redis.get as jest.Mock).mockResolvedValue('123456')
+    ;(redis.del as jest.Mock).mockResolvedValue(true)
+    ;(redis.set as jest.Mock).mockResolvedValue(true)
 
-    expect(result.email).toBe('test@mail.com')
-    expect(mockRepo.findByEmail).toBeCalledWith('test@mail.com')
-    expect(redis.del).toBeCalledWith('email_verified:test@mail.com')
+    const emailService = new EmailServiceImpl()
+    const data = { email: 'nphv852004@gmail.com', otp: '123456' }
+    await expect(emailService.verify(data)).resolves.toBeUndefined()
+
+    expect(redis.get).toHaveBeenCalledTimes(1)
+    expect(redis.del).toHaveBeenCalledTimes(1)
+    expect(redis.set).toHaveBeenCalledTimes(1)
   })
 })
