@@ -207,6 +207,7 @@ export default class PostServiceImpl implements IPostService {
           updatedAt: item.updatedAt ?? null,
           postType: item.postType,
           likeAmount: item.postLikes.length,
+          likeList: [],
           postMedias: []
         })
 
@@ -215,6 +216,7 @@ export default class PostServiceImpl implements IPostService {
         }
         for (const i of item.postMedias) {
           const postMedia = new PostMediaInputDTO({
+            id: i.id,
             mediaUrl: i.mediaUrl,
             mediaType: i.mediaType,
             createdAt: i.createdAt,
@@ -223,6 +225,14 @@ export default class PostServiceImpl implements IPostService {
           dto.postMedias.push(postMedia)
         }
         listOutDto.push(dto)
+        for (const i of item.postLikes) {
+          const accountDto = new AccountDTO({
+            id: i.account.id,
+            username: i.account.username,
+            email: i.account.email
+          })
+          dto.likeList.push(accountDto)
+        }
       }
       return listOutDto
     } catch (error) {
@@ -233,6 +243,7 @@ export default class PostServiceImpl implements IPostService {
   async getOneById(id): Promise<GetPostDetailOutputDTO> {
     try {
       const response: Posts | null = await this.postRepo.getOne(id)
+      console.log(response)
       if (!response) throw new NotFound()
       const dto = new GetPostDetailOutputDTO({
         accountId: response.accounts.id,
@@ -251,13 +262,14 @@ export default class PostServiceImpl implements IPostService {
       }
       const account = await this.accountRepo.findById(response.accounts.id)
       if (!account) throw new BadRequest()
-      dto.listLike.push(
-        new AccountDTO({
-          id: account.id,
-          username: account.username,
-          email: account.email
+      for (const item of response.postLikes) {
+        const accountDto = new AccountDTO({
+          id: item.account.id,
+          username: item.account.username,
+          email: item.account.email
         })
-      )
+        dto.listLike.push(accountDto)
+      }
       for (const item of response.postMedias) {
         const postMedia = new PostMediaInputDTO({
           id: item.id,

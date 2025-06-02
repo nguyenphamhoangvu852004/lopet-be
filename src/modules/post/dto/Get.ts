@@ -8,6 +8,7 @@ export class GetPostOutputDTO {
   postType!: string
   postMedias?: PostMediaInputDTO[]
   likeAmount!: number
+  likeList!: AccountDTO[]
   createdAt!: Date
   updatedAt!: Date | null
   constructor(data?: Partial<GetPostOutputDTO>) {
