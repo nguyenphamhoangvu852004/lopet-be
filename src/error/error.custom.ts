@@ -9,8 +9,8 @@ export class HttpError extends Error {
 }
 
 export class NotFound extends HttpError {
-  constructor() {
-    super(httpStatusCode.NOT_FOUND, httpStatusMessage.NOT_FOUND)
+  constructor(message?: string) {
+    super(httpStatusCode.NOT_FOUND, message ?? httpStatusMessage.NOT_FOUND)
   }
 }
 

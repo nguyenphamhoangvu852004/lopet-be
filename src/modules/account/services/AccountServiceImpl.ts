@@ -91,7 +91,7 @@ export class AccountServiceImpl implements IAccountService {
   async getByUsername(data: string): Promise<GetAccountOutputDTO> {
     try {
       const account = await this.repo.findByUsername(data)
-      if (!account) throw new Error('Not found')
+      if (!account) throw new NotFound('Not found')
       const dto = new GetAccountOutputDTO({
         id: account.id,
         email: account.email,

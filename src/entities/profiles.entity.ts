@@ -29,7 +29,7 @@ export class Profiles extends BaseEntity {
     type: 'tinyint',
     nullable: true
   })
-  sex!: number 
+  sex!: number
   @Column({
     type: 'date',
     nullable: true

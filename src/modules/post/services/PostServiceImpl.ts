@@ -1,7 +1,7 @@
 import { PostLikes } from '~/entities/postLikes.entity'
 import { MEDIATYPE, PostMedias } from '~/entities/postMedias.entity'
 import { Posts, POSTSCOPE } from '~/entities/posts.entity'
-import { BadRequest, NotFound } from '~/error/error.custom'
+import { BadRequest, Forbidden, NotFound } from '~/error/error.custom'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import IGroupRepo from '~/modules/group/repositories/IGroupRepo'
 import { CreatePostInputDTO, CreatePostOutputDTO, PostMediaInputDTO } from '~/modules/post/dto/Create'
@@ -14,7 +14,7 @@ import {
   GetPostOutputDTO
 } from '~/modules/post/dto/Get'
 import { LikePostInputDTO, LikePostOuputDTO, UnlikePostInputDTO, UnlikePostOutputDTO } from '~/modules/post/dto/React'
-import { UpdatePostInputDTO } from '~/modules/post/dto/Update'
+import { UpdatePostInputDTO, UpdatePostOutputDTO } from '~/modules/post/dto/Update'
 import IPostRepo from '~/modules/post/repositories/IPostRepo'
 import IPostService from '~/modules/post/services/IPostService'
 import IPostLikeRepo from '~/modules/postLike/repositories/IPostLikeRepo'
@@ -35,60 +35,81 @@ export default class PostServiceImpl implements IPostService {
     this.postMediaRepo = postMediaRepo
     this.postLikesRepo = postLikesRepo
   }
-  async update(data: UpdatePostInputDTO): Promise<CreatePostOutputDTO> {
+  async update(data: UpdatePostInputDTO): Promise<UpdatePostOutputDTO> {
     try {
+      // 1. Tìm post
       const post = await this.postRepo.getOne(data.postId)
       if (!post) throw new BadRequest('Post not found')
 
-      // Kiểm tra quyền sở hữu
-      // if (post.accounts.id !== data.accountId) {
-      //   throw new Forbidden('You are not the owner of this post')
-      // }
+      // 2. Kiểm tra quyền sở hữu
+      if (post.accounts.id !== Number(data.owner)) {
+        throw new Forbidden('You are not the owner of this post')
+      }
 
-      // Cập nhật content
+      // 3. Cập nhật nội dung & scope
       post.content = data.content
-
-      // Cập nhật scope
-      if (data.scope === 'PUBLIC') post.postScope = POSTSCOPE.PUBLIC
-      else if (data.scope === 'FRIEND') post.postScope = POSTSCOPE.FRIEND
-      else if (data.scope === 'PRIVATE') post.postScope = POSTSCOPE.PRIVATE
+      switch (data.scope) {
+        case 'PUBLIC':
+          post.postScope = POSTSCOPE.PUBLIC
+          break
+        case 'FRIEND':
+          post.postScope = POSTSCOPE.FRIEND
+          break
+        case 'PRIVATE':
+          post.postScope = POSTSCOPE.PRIVATE
+          break
+      }
 
       const updatedPost = await this.postRepo.update(post)
       if (!updatedPost) throw new BadRequest('Update failed')
 
-      // Xóa media cũ
-      await this.postMediaRepo.deleteByPostId(post.id)
+      // 4. Xoá media cũ không còn giữ
+      await this.postMediaRepo.deleteNotIn(post.id, data.oldIdsMedia ?? [])
 
-      // Thêm media mới
-      const newMediaList: PostMediaInputDTO[] = []
+      // 5. Lấy lại danh sách media được giữ lại
+      const listOldMedia: PostMedias[] = []
+      if (data.oldIdsMedia) {
+        for (const id of data.oldIdsMedia) {
+          const media = await this.postMediaRepo.getById(id)
+          if (!media) throw new BadRequest(`Old media not found: ID ${id}`)
+          listOldMedia.push(media)
+        }
+      }
+
+      // 6. Tạo media mới
+      const listNewMedia: PostMedias[] = []
       for (const item of data.postMedias ?? []) {
-        const newMediaEntity = new PostMedias({
-          post: post,
+        const newMedia = new PostMedias({
+          post,
           mediaUrl: item.mediaUrl,
           mediaType: item.mediaType === 'IMAGE' ? MEDIATYPE.IMAGE : MEDIATYPE.VIDEO
         })
-        const saved = await this.postMediaRepo.create(newMediaEntity)
-        if (!saved) throw new BadRequest('Save media failed')
 
-        newMediaList.push({
-          mediaUrl: saved.mediaUrl,
-          mediaType: saved.mediaType,
-          updatedAt: new Date(),
-          createdAt: new Date()
-        })
+        const saved = await this.postMediaRepo.create(newMedia)
+        if (!saved) throw new BadRequest('Save media failed')
+        listNewMedia.push(saved)
       }
 
-      // Trả về DTO giống create
-      return new CreatePostOutputDTO({
-        accountId: updatedPost.accounts.id,
+      // 7. Gộp danh sách media và trả về DTO
+      const allMedia = [...listOldMedia, ...listNewMedia]
+      const postMediaOutput: PostMediaInputDTO[] = allMedia.map((m) => ({
+        id: m.id,
+        mediaUrl: m.mediaUrl,
+        mediaType: m.mediaType,
+        createdAt: m.createdAt,
+        updatedAt: m.updatedAt
+      }))
+
+      return new UpdatePostOutputDTO({
+        owner: updatedPost.accounts.id,
         content: updatedPost.content,
         postId: updatedPost.id,
         postType: updatedPost.postType,
         scope: updatedPost.postScope,
-        groupId: updatedPost.group?.id ?? null,
+        groupId: updatedPost.group?.id,
         updatedAt: new Date(),
         createdAt: updatedPost.createdAt,
-        postMedias: newMediaList
+        postMedias: postMediaOutput
       })
     } catch (error) {
       handleThrowError(error)
@@ -101,7 +122,6 @@ export default class PostServiceImpl implements IPostService {
       if (!listEntity) throw new NotFound()
       const listOutDto: GetPostOutputDTO[] = []
       for (const item of listEntity) {
-        console.log(item)
         const dto = new GetPostOutputDTO({
           accountId: item.accounts.id,
           content: item.content,
@@ -140,7 +160,6 @@ export default class PostServiceImpl implements IPostService {
       if (!listEntity) throw new NotFound()
       const listOutDto: GetPostByAccountIdOutputDTO[] = []
       for (const item of listEntity) {
-        console.log(item)
         const dto = new GetPostByAccountIdOutputDTO({
           content: item.content,
           groupId: item.group?.id ?? null,
@@ -177,7 +196,6 @@ export default class PostServiceImpl implements IPostService {
       if (!listEntity) throw new NotFound()
       const listOutDto: GetPostOutputDTO[] = []
       for (const item of listEntity) {
-        console.log(item)
         const dto = new GetPostOutputDTO({
           accountId: item.accounts.id,
           content: item.content,
@@ -187,6 +205,7 @@ export default class PostServiceImpl implements IPostService {
           updatedAt: item.updatedAt ?? null,
           postType: item.postType,
           likeAmount: item.postLikes.length,
+          likeList: [],
           postMedias: []
         })
 
@@ -195,6 +214,7 @@ export default class PostServiceImpl implements IPostService {
         }
         for (const i of item.postMedias) {
           const postMedia = new PostMediaInputDTO({
+            id: i.id,
             mediaUrl: i.mediaUrl,
             mediaType: i.mediaType,
             createdAt: i.createdAt,
@@ -203,6 +223,14 @@ export default class PostServiceImpl implements IPostService {
           dto.postMedias.push(postMedia)
         }
         listOutDto.push(dto)
+        for (const i of item.postLikes) {
+          const accountDto = new AccountDTO({
+            id: i.account.id,
+            username: i.account.username,
+            email: i.account.email
+          })
+          dto.likeList.push(accountDto)
+        }
       }
       return listOutDto
     } catch (error) {
@@ -213,6 +241,7 @@ export default class PostServiceImpl implements IPostService {
   async getOneById(id): Promise<GetPostDetailOutputDTO> {
     try {
       const response: Posts | null = await this.postRepo.getOne(id)
+      console.log(response)
       if (!response) throw new NotFound()
       const dto = new GetPostDetailOutputDTO({
         accountId: response.accounts.id,
@@ -231,15 +260,17 @@ export default class PostServiceImpl implements IPostService {
       }
       const account = await this.accountRepo.findById(response.accounts.id)
       if (!account) throw new BadRequest()
-      dto.listLike.push(
-        new AccountDTO({
-          id: account.id,
-          username: account.username,
-          email: account.email
+      for (const item of response.postLikes) {
+        const accountDto = new AccountDTO({
+          id: item.account.id,
+          username: item.account.username,
+          email: item.account.email
         })
-      )
+        dto.listLike.push(accountDto)
+      }
       for (const item of response.postMedias) {
         const postMedia = new PostMediaInputDTO({
+          id: item.id,
           mediaUrl: item.mediaUrl,
           mediaType: item.mediaType,
           createdAt: item.createdAt,
@@ -312,6 +343,7 @@ export default class PostServiceImpl implements IPostService {
         if (!responsePostMedia) throw new BadRequest()
         // Map PostMedias entity to PostMediaInputDTO
         const postMediaDTO: PostMediaInputDTO = {
+          id: responsePostMedia.id,
           mediaUrl: responsePostMedia.mediaUrl,
           mediaType: responsePostMedia.mediaType,
           updatedAt: new Date(), // fallback to current date if null

@@ -3,7 +3,7 @@ import { BadRequest } from '~/error/error.custom'
 import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { CreateCommentInputDTO, CreateCommentOutputDTO } from '~/modules/comment/dto/Create'
-import { DeleteCommentOutputDTO } from '~/modules/comment/dto/Delete'
+import { DeleteCommentInputDTO, DeleteCommentOutputDTO } from '~/modules/comment/dto/Delete'
 import { CommentOutputDTO, GetCommentOutputDTO } from '~/modules/comment/dto/Get'
 import { ICommentRepo } from '~/modules/comment/repositories/ICommentRepo'
 import { ICommentService } from '~/modules/comment/services/ICommentService'
@@ -23,13 +23,13 @@ export class CommentServiceImpl implements ICommentService {
     this.postRepo = postRepo
     this.profileRepo = profileRepo
   }
-  async delete(data: number): Promise<DeleteCommentOutputDTO> {
+  async delete(data: DeleteCommentInputDTO): Promise<DeleteCommentOutputDTO> {
     try {
       // kiếm comment
-      const comment = await this.commentRepo.findCommentById(data)
+      const comment = await this.commentRepo.findCommentById(data.commentId)
       if (!comment) throw new BadRequest('No comment found')
       // kiểm tra quyền xóa
-      const account = await this.accountRepo.findById(comment.account.id)
+      const account = await this.accountRepo.findById(data.owner)
       if (!account) throw new BadRequest('No account found')
       if (account.id !== comment.account.id) throw new BadRequest('You do not have permission to delete this comment')
       // xóa comment
@@ -42,7 +42,6 @@ export class CommentServiceImpl implements ICommentService {
       handleThrowError(error)
     }
   }
-
   async getCommentAllFromPost(data: number): Promise<GetCommentOutputDTO> {
     try {
       // kiếm bài post
@@ -51,7 +50,6 @@ export class CommentServiceImpl implements ICommentService {
       // kiếm tất cả các comment trong bài post
       const comments = await this.commentRepo.getCommentAllFromPost(post.id)
 
-      console.log(comments)
       const dto = new GetCommentOutputDTO({
         postId: post.id,
         comments: []
@@ -82,10 +80,8 @@ export class CommentServiceImpl implements ICommentService {
         dtoComment.createdAt = comment.createdAt
         dtoComment.account = account
         dtoComment.replyToCommentId = comment.parent?.id ?? undefined
-        console.log(dtoComment)
         dto.comments.push(dtoComment)
       }
-      console.log(dto)
       return dto
     } catch (error) {
       handleThrowError(error)

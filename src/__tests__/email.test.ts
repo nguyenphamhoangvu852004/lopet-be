@@ -19,16 +19,11 @@ jest.mock('~/config/emailConfig', () => ({
   }
 }))
 
-// jest.mock('~/utils/handle.util', () => ({
-//   handleThrowError: jest.fn((err) => {
-//     throw err
-//   })
-// }))
-
-describe('send otp', () => {
+describe('EmailServiceImpl', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
+
   test('should send otp to email', async () => {
     ;(redis.get as jest.Mock).mockResolvedValue(null)
     ;(redis.set as jest.Mock).mockResolvedValue(true)
@@ -42,15 +37,7 @@ describe('send otp', () => {
     expect(redis.set).toHaveBeenCalledTimes(1)
     expect(transporter.sendMail).toHaveBeenCalledTimes(1)
   })
-})
-// expect(undefined).toBeUndefined()  // pass
-// expect(null).toBeUndefined()       // fail
-// expect(0).toBeUndefined()          // fail
-// expect('hello').toBeUndefined()    // fail
-describe('verify otp', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
+
   test('should verify otp', async () => {
     ;(redis.get as jest.Mock).mockResolvedValue('123456')
     ;(redis.del as jest.Mock).mockResolvedValue(true)
@@ -58,6 +45,7 @@ describe('verify otp', () => {
 
     const emailService = new EmailServiceImpl()
     const data = { email: 'nphv852004@gmail.com', otp: '123456' }
+
     await expect(emailService.verify(data)).resolves.toBeUndefined()
 
     expect(redis.get).toHaveBeenCalledTimes(1)
