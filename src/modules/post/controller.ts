@@ -19,71 +19,66 @@ export class PostController {
   }
   async update(req: Request, res: Response) {
     try {
-      const data = req.body
       const { postId } = req.params
-      console.log('Update post data:', data)
-      console.log('Post ID:', postId)
+      const data = req.body
       const files = req.files as { images?: Express.Multer.File[]; videos?: Express.Multer.File[] }
-      const images: PostMediaInputDTO[] = []
-      const videos: PostMediaInputDTO[] = []
 
-      if (files.images) {
+      const uploadedMedias: PostMediaInputDTO[] = []
+
+      // Upload images
+      if (files?.images?.length) {
         for (const image of files.images) {
           const rs = await cloudinary.uploader.upload(image.path, { resource_type: 'image' })
-          const imageDTO = new PostMediaInputDTO({
-            mediaUrl: rs.secure_url,
-            mediaType: rs.resource_type == 'image' ? MEDIATYPE.IMAGE : MEDIATYPE.VIDEO
-          })
-          images.push(imageDTO)
-          logger.info(image)
+          uploadedMedias.push(
+            new PostMediaInputDTO({
+              mediaUrl: rs.secure_url,
+              mediaType: MEDIATYPE.IMAGE
+            })
+          )
         }
       }
 
-      if (files.videos) {
+      // Upload videos
+      if (files?.videos?.length) {
         for (const video of files.videos) {
-          const rs = await cloudinary.uploader.upload(files.videos[0].path, { resource_type: 'video' })
-          const videoDTO = new PostMediaInputDTO({
-            mediaUrl: rs.secure_url,
-            mediaType: rs.resource_type == 'image' ? MEDIATYPE.IMAGE : MEDIATYPE.VIDEO
-          })
-          videos.push(videoDTO)
-          logger.info(video)
+          const rs = await cloudinary.uploader.upload(video.path, { resource_type: 'video' })
+          uploadedMedias.push(
+            new PostMediaInputDTO({
+              mediaUrl: rs.secure_url,
+              mediaType: MEDIATYPE.VIDEO
+            })
+          )
+        }
+      }
+
+      const oldIdsMedia: number[] = []
+      if (data.oldIdsMedia) {
+        if (Array.isArray(data.oldIdsMedia)) {
+          oldIdsMedia.push(...data.oldIdsMedia.map(Number))
+        } else {
+          oldIdsMedia.push(Number(data.oldIdsMedia))
         }
       }
 
       const dto = new UpdatePostInputDTO({
         postId: Number(postId),
-        accountId: data.accountId,
+        owner: Number(data.owner),
+        oldIdsMedia,
         content: data.content,
-        postMedias: [...images, ...videos]
+        postMedias: uploadedMedias,
+        scope: (() => {
+          const isGroup = !!data.groupId
+          const allowedScopes = isGroup ? ['PUBLIC', 'PRIVATE'] : ['PUBLIC', 'FRIEND', 'PRIVATE']
+          if (!allowedScopes.includes(data.scope)) throw new BadRequest('Invalid scope')
+          return data.scope
+        })()
       })
-      if (data.groupId) {
-        // Đây là bài viết trong group ⇒ chỉ cho phép PUBLIC hoặc PRIVATE
-        if (data.scope === 'PUBLIC') {
-          dto.scope = POSTSCOPE.PUBLIC
-        } else if (data.scope === 'PRIVATE') {
-          dto.scope = POSTSCOPE.PRIVATE
-        } else {
-          throw new BadRequest()
-        }
-      } else {
-        // Đây là bài viết cá nhân
-        if (data.scope === 'PUBLIC') {
-          dto.scope = POSTSCOPE.PUBLIC
-        } else if (data.scope === 'FRIEND') {
-          dto.scope = POSTSCOPE.FRIEND
-        } else if (data.scope === 'PRIVATE') {
-          dto.scope = POSTSCOPE.PRIVATE
-        } else {
-          throw new BadRequest()
-        }
-      }
+
       const response = await this.postService.update(dto)
 
-      console.log(response)
-      sendResponse(
+      return sendResponse(
         new ApiResponse({
-          res: res,
+          res,
           statusCode: httpStatusCode.OK,
           message: 'Update post successfully',
           data: response
@@ -93,6 +88,7 @@ export class PostController {
       handleControllerError(err, res)
     }
   }
+
   async getSuggestList(req: Request, res: Response) {
     try {
       const response = await this.postService.getSuggestList()

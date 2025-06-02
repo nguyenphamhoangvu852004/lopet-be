@@ -1,4 +1,5 @@
 export class PostMediaInputDTO {
+  id!: number
   mediaUrl!: string
   mediaType!: string
   createdAt!: Date
