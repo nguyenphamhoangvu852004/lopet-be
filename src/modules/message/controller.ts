@@ -17,7 +17,7 @@ export class MessageController {
     try {
       const { id } = req.params
       const { targetId } = req.query
-
+      console.log(id, targetId)
       const inputDTO = new GetListMessageInputDTO({
         senderId: Number(id),
         receiverId: Number(targetId)

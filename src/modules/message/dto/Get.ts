@@ -3,6 +3,7 @@ export class GetMessageOutputDTO {
   senderId!: number
   receiverId!: number
   content!: string
+  mediaUrl?: string
   createdAt!: Date
   status!: string
   constructor(data?: Partial<GetMessageOutputDTO>) {

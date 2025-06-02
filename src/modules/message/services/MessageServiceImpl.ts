@@ -32,6 +32,7 @@ export default class MessageServiceImpl implements IMessageService {
         const dto = new GetMessageOutputDTO({
           id: message.id,
           content: message.content,
+          mediaUrl: message.mediaUrl,
           senderId: message.sender.id,
           receiverId: message.receiver.id,
           createdAt: message.createdAt,
@@ -54,6 +55,7 @@ export default class MessageServiceImpl implements IMessageService {
         content: response.content,
         senderId: response.sender.id,
         receiverId: response.receiver.id,
+        mediaUrl: response.mediaUrl,
         createdAt: response.createdAt,
         status: response.status
       })
