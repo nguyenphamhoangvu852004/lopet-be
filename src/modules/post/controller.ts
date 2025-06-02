@@ -182,8 +182,8 @@ export class PostController {
       }
 
       if (files.videos) {
-        for (const video of files.videos) {
-          const rs = await cloudinary.uploader.upload(files.videos[0].path, { resource_type: 'video' })
+        for (const video in files.videos) {
+          const rs = await cloudinary.uploader.upload(files.videos[video].path, { resource_type: 'video' })
           const videoDTO = new PostMediaInputDTO({
             mediaUrl: rs.secure_url,
             mediaType: rs.resource_type == 'image' ? MEDIATYPE.IMAGE : MEDIATYPE.VIDEO
