@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import cloudinary from '~/config/cloudinary'
 import { httpStatusCode } from '~/global/httpStatusCode'
 import { CreateCommentInputDTO } from '~/modules/comment/dto/Create'
+import { DeleteCommentInputDTO } from '~/modules/comment/dto/Delete'
 import { ICommentService } from '~/modules/comment/services/ICommentService'
 import { ApiResponse, sendResponse } from '~/response/api.response'
 import { handleControllerError } from '~/utils/handle.util'
@@ -12,7 +13,12 @@ export class CommentController {
   async delete(req: Request, res: Response) {
     try {
       const { commentId } = req.params
-      const response = await this.commentService.delete(Number(commentId))
+      const { owner } = req.body
+      const dto = new DeleteCommentInputDTO({
+        commentId: Number(commentId),
+        owner: owner
+      })
+      const response = await this.commentService.delete(dto)
       sendResponse(
         new ApiResponse({
           res: res,

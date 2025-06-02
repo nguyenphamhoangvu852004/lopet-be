@@ -1,9 +1,7 @@
 import { redis } from '~/config/appDataSource'
 import { Accounts } from '~/entities/accounts.entity'
 import { BadRequest, Conflict, Forbidden, NotFound } from '~/error/error.custom'
-import { GetAccountOutputDTO } from '~/modules/account/dto/Get'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
-import { AccountServiceImpl } from '~/modules/account/services/AccountServiceImpl'
 import { VerifyAccountInputDTO, VerifyAccountOutputDTO } from '~/modules/auth/dto/ForgotPassword'
 import { LoginInputDTO, LoginOutputDTO } from '~/modules/auth/dto/Login'
 import { RegisterInputDTO, RegisterOutputDTO } from '~/modules/auth/dto/Register'
@@ -36,7 +34,6 @@ export default class AuthServiceImpl implements IAuthService {
           roles: []
         }
         for (const role of account.roles) payload.roles.push(role.name) //account.roles
-        console.log(payload)
         const accessToken = generateAccessToken(payload)
         const refreshToken = generateRefreshToken(payload)
         const result = new LoginOutputDTO({

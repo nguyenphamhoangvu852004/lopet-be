@@ -1,6 +1,4 @@
 import { Router } from 'express'
-import { ROLENAME } from '~/entities/roles.entity'
-import { verifyRole } from '~/middlewares/verifyRole'
 import { verifyToken } from '~/middlewares/verifyToken'
 import { AccountController } from '~/modules/account/controller'
 import AccountRepoImpl from '~/modules/account/repositories/AccountRepoImpl'

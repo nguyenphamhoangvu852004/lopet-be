@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { GetListRoleOutputDTO } from '~/modules/role/dto/Get'
 import IRoleRepo from '../repo/IRoleRepo'
 import IRoleService from './IRoleService'

@@ -1,5 +1,3 @@
-import { debug, log } from 'node:console'
-import { waitForDebugger } from 'node:inspector'
 import { PostLikes } from '~/entities/postLikes.entity'
 import { MEDIATYPE, PostMedias } from '~/entities/postMedias.entity'
 import { Posts, POSTSCOPE } from '~/entities/posts.entity'

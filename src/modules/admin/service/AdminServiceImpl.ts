@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { environment } from '~/config/env'
+import { Accounts } from '~/entities/accounts.entity'
 import { ROLENAME } from '~/entities/roles.entity'
-import { BadRequest, Conflict } from '~/error/error.custom'
+import { BadRequest } from '~/error/error.custom'
+import { AccountController } from '~/modules/account/controller'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { IAdminService } from '~/modules/admin/service/IAdminService'
 import { hashPassword } from '~/utils/bcryptjs.util'
@@ -19,27 +21,13 @@ export default class AdminServiceImpl implements IAdminService {
       if (!isExist) {
         const adminPass = environment.INIT_ADMIN_PASSWORD as string
         const hashedPassword = await hashPassword(adminPass)
-        const admin = await this.accountRepo.create({
+        const admin = new Accounts({
           username: environment.INIT_ADMIN_USERNAME as string,
           email: environment.INIT_ADMIN_EMAIL as string,
-          password: hashedPassword,
-          id: 0,
-          isBanned: 0,
-          profile: null,
-          groups: [],
-          memberGroups: [],
-          posts: [],
-          roles: [],
-          postlikes: [],
-          reports: [],
-          sentFriendRequests: [],
-          receivedFriendRequests: [],
-          advertisements: [],
-          comments: [],
-          createdAt: new Date(),
-          updatedAt: null,
-          deletedAt: null
+          password: hashedPassword 
         })
+        const response = await this.accountRepo.create(admin)
+        if (!response) throw new BadRequest('Create admin failed')
         return admin
       } else {
         return null

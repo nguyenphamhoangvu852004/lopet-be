@@ -37,7 +37,6 @@ export default class EmailServiceImpl implements IEmailService {
   `
       })
       if (!response) throw new BadRequest('Send email failed')
-      console.log(response)
       return
     } catch (error) {
       handleThrowError(error)

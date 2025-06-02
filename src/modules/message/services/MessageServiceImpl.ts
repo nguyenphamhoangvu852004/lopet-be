@@ -1,4 +1,5 @@
 import { Messages, MESSAGESTATUS } from '~/entities/messages.entity'
+import { BadRequest, NotFound } from '~/error/error.custom'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { CreateMessageInputDTO, CreateMessageOutputDTO } from '~/modules/message/dto/CreateMessageDTO'
 import { GetListMessageInputDTO, GetMessageOutputDTO } from '~/modules/message/dto/Get'
@@ -79,9 +80,9 @@ export default class MessageServiceImpl implements IMessageService {
   async createMessage(data: CreateMessageInputDTO): Promise<CreateMessageOutputDTO> {
     try {
       const sender = await this.accountRepo.findById(Number(data.senderId))
-      if (!sender) throw new Error('Sender not found')
+      if (!sender) throw new NotFound('Sender not found')
       const receiver = await this.accountRepo.findById(Number(data.receiverId))
-      if (!receiver) throw new Error('Receiver not found')
+      if (!receiver) throw new NotFound('Receiver not found')
       const messageEntity = new Messages({
         content: data.content,
         sender: sender,
@@ -90,7 +91,7 @@ export default class MessageServiceImpl implements IMessageService {
         status: MESSAGESTATUS.SENT
       })
       const response = await this.messageRepo.create(messageEntity)
-      if (!response) throw new Error('Create message failed')
+      if (!response) throw new BadRequest('Create message failed')
       const dto = new CreateMessageInputDTO({
         content: data.content,
         senderId: data.senderId,
