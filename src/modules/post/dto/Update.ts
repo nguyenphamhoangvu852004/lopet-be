@@ -2,8 +2,9 @@ import { PostMediaInputDTO } from '~/modules/post/dto/Create'
 
 export class UpdatePostInputDTO {
   postId!: number
-  accountId!: number
+  owner!: number
   content!: string
+  oldIdsMedia?: number[]
   postMedias?: PostMediaInputDTO[]
   scope!: string
   createdAt!: Date
@@ -14,11 +15,12 @@ export class UpdatePostInputDTO {
 }
 
 export class UpdatePostOutputDTO {
-  accountId!: number
+  owner!: number
   postId!: number
   content!: string
   postType!: string
   scope!: string
+  groupId?: number
   postMedias?: PostMediaInputDTO[]
   createdAt!: Date
   updatedAt!: Date

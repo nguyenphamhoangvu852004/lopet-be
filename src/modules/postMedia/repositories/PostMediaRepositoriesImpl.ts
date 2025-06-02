@@ -8,6 +8,24 @@ export class PostMediaRepositoriesImpl implements IPostMediaRepositories {
   constructor() {
     this.postMediaRepo = mySqlDataSource.getRepository(PostMedias)
   }
+  async deleteNotIn(postId: number, keepIds: number[]): Promise<void> {
+    const qb = this.postMediaRepo.createQueryBuilder().delete().from(PostMedias).where('post_id = :postId', { postId })
+
+    if (keepIds.length > 0) {
+      qb.andWhere('id NOT IN (:...keepIds)', { keepIds })
+    }
+
+    await qb.execute()
+  }
+
+  async getById(id: number): Promise<PostMedias | null> {
+    const response = await this.postMediaRepo.findOne({ where: { id: id }, relations: { post: true } })
+    console.log(`id: ${id}`)
+    console.log(response)
+    if (!response) return null
+    return response
+  }
+
   async deleteByPostId(postId: number): Promise<PostMedias[] | null> {
     const response = await this.postMediaRepo.find({
       where: { post: { id: postId } },
