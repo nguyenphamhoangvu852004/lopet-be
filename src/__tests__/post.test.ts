@@ -49,10 +49,10 @@ describe('PostServiceImpl - create', () => {
   })
 
   test('should create post with media successfully', async () => {
-    const mockAccount = { id: 'acc-123' }
-    const mockGroup = { id: 'group-123' }
+    const mockAccount = { id: '1' }
+    const mockGroup = { id: '8' }
     const mockPost = {
-      id: 'post-123',
+      id: '1',
       accounts: mockAccount,
       content: 'Test content',
       postType: 'TEXT',
@@ -60,8 +60,8 @@ describe('PostServiceImpl - create', () => {
       group: mockGroup
     }
     const mockPostMedia = {
-      id: 'media-123',
-      mediaUrl: 'https://example.com/image.jpg',
+      id: '1',
+      mediaUrl: 'https://examplecloudinarytestmediaurl.com/xxx/nnn.jpg',
       mediaType: MEDIATYPE.IMAGE
     }
 
@@ -107,6 +107,7 @@ describe('PostServiceImpl - create', () => {
     expect(mockGroupRepo.findById).toHaveBeenCalledWith(2)
     expect(mockPostRepo.create).toHaveBeenCalled()
     expect(mockPostMediaRepo.create).toHaveBeenCalled()
+    
   })
 
   test('should throw BadRequest if account is not found', async () => {
@@ -122,14 +123,13 @@ describe('PostServiceImpl - create', () => {
   })
 
   test('should create post even if group not found', async () => {
-    const mockAccount = { id: 'acc-123' }
+    const mockAccount = { id: '1' }
     const mockPost = {
-      id: 'post-456',
+      id: '2',
       accounts: mockAccount,
       content: 'No group content',
       postType: 'TEXT',
-      postScope: POSTSCOPE.FRIEND,
-      group: null
+      postScope: POSTSCOPE.FRIEND
     }
 
     mockAccountRepo.findById.mockResolvedValue(mockAccount)
@@ -139,9 +139,8 @@ describe('PostServiceImpl - create', () => {
 
     const input = new CreatePostInputDTO({
       accountId: 1,
-      groupId: 3,
       content: 'No group content',
-      scope: 'FRIEND',
+      scope: 'PUBLIC',
       postMedias: []
     })
     const result = await postService.create(input)

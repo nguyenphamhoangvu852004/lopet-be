@@ -111,26 +111,25 @@ describe('Register account', () => {
 
   test('should throw BadRequest if email is not verified', async () => {
     ;(redis.get as jest.Mock).mockResolvedValue(null)
-
-    const input = { email: 'test@example.com', username: 'user1', password: '123', confirmPassword: '123' }
+    const input = {
+      email: 'nphv82004@gmail.com',
+      username: 'nphv852004',
+      password: '654321',
+      confirmPassword: '654321'
+    }
     await expect(authService.register(input)).rejects.toThrow(BadRequest)
   })
 
   test('should throw Conflict if email already exists', async () => {
     ;(redis.get as jest.Mock).mockResolvedValue('true')
     ;(redis.del as jest.Mock).mockResolvedValue(true)
-    mockAccountRepo.findByEmail.mockResolvedValue({ id: '1' })
-
-    const input = { email: 'test@example.com', username: 'user1', password: '123', confirmPassword: '123' }
-    await expect(authService.register(input)).rejects.toThrow(Conflict)
-  })
-
-  test('should throw Conflict if email already exists', async () => {
-    ;(redis.get as jest.Mock).mockResolvedValue('true')
-    ;(redis.del as jest.Mock).mockResolvedValue(true)
-    mockAccountRepo.findByEmail.mockResolvedValue({ id: '1' })
-
-    const input = { email: 'test@example.com', username: 'user1', password: '123', confirmPassword: '123' }
+    mockAccountRepo.findByEmail.mockResolvedValue({ email: 'nphv82004@gmail.com' })
+    const input = {
+      email: 'nphv82004@gmail.com',
+      username: 'nphv852004',
+      password: '654321',
+      confirmPassword: '654321'
+    }
     await expect(authService.register(input)).rejects.toThrow(Conflict)
   })
 
@@ -139,8 +138,12 @@ describe('Register account', () => {
     ;(redis.del as jest.Mock).mockResolvedValue(true)
     mockAccountRepo.findByEmail.mockResolvedValue(null)
     mockAccountRepo.findByUsername.mockResolvedValue(null)
-
-    const input = { email: 'test@example.com', username: 'user1', password: '123', confirmPassword: '321' }
+    const input = {
+      email: 'nphv82004@gmail.com',
+      username: 'nphv852004',
+      password: '654321',
+      confirmPassword: '6543210'
+    }
     await expect(authService.register(input)).rejects.toThrow(BadRequest)
   })
 
@@ -151,12 +154,17 @@ describe('Register account', () => {
     mockAccountRepo.findByUsername.mockResolvedValue(null)
     ;(hashPassword as jest.Mock).mockResolvedValue('hashedpassword')
     mockAccountRepo.create.mockResolvedValue({
-      id: '123',
-      email: 'test@example.com',
-      username: 'user1'
+      id: '1',
+      email: 'nphv852004@gmail.com',
+      username: 'nphv852004'
     })
 
-    const input = { email: 'test@example.com', username: 'user1', password: '123', confirmPassword: '123' }
+    const input = {
+      email: 'nphv852004@gmail.com',
+      username: 'nphv852004',
+      password: '654321',
+      confirmPassword: '654321'
+    }
     const result = await authService.register(input)
     expect(result.email).toBe(input.email)
     expect(result.username).toBe(input.username)
