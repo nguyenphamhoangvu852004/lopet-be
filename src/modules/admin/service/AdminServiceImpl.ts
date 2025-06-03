@@ -3,7 +3,6 @@ import { environment } from '~/config/env'
 import { Accounts } from '~/entities/accounts.entity'
 import { ROLENAME } from '~/entities/roles.entity'
 import { BadRequest } from '~/error/error.custom'
-import { AccountController } from '~/modules/account/controller'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import { IAdminService } from '~/modules/admin/service/IAdminService'
 import { hashPassword } from '~/utils/bcryptjs.util'
@@ -24,7 +23,7 @@ export default class AdminServiceImpl implements IAdminService {
         const admin = new Accounts({
           username: environment.INIT_ADMIN_USERNAME as string,
           email: environment.INIT_ADMIN_EMAIL as string,
-          password: hashedPassword 
+          password: hashedPassword
         })
         const response = await this.accountRepo.create(admin)
         if (!response) throw new BadRequest('Create admin failed')

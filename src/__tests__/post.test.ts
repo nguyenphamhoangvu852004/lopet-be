@@ -107,7 +107,6 @@ describe('PostServiceImpl - create', () => {
     expect(mockGroupRepo.findById).toHaveBeenCalledWith(2)
     expect(mockPostRepo.create).toHaveBeenCalled()
     expect(mockPostMediaRepo.create).toHaveBeenCalled()
-    
   })
 
   test('should throw BadRequest if account is not found', async () => {
