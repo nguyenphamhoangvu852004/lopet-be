@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Accounts } from '~/entities/accounts.entity'
 import { Profiles } from '~/entities/profiles.entity'
+import { ROLENAME } from '~/entities/roles.entity'
 import { BadRequest, NotFound } from '~/error/error.custom'
 import { BanIdOutputDTO } from '~/modules/account/dto/ban'
 import { CreateAccountDTO } from '~/modules/account/dto/Create'
@@ -66,9 +67,21 @@ export class AccountServiceImpl implements IAccountService {
 
   async getList(): Promise<Accounts[]> {
     try {
-      return await this.repo.findAll()
+      const response = await this.repo.findAll();
+
+      const list: Accounts[] = [];
+
+      for (const account of response) {
+        const isAdmin = account.roles.some(role => role.name === ROLENAME.ADMIN);
+        if (!isAdmin) {
+          list.push(account);
+        }
+      }
+
+      return list;
+
     } catch (error) {
-      handleThrowError(error)
+      handleThrowError(error);
     }
   }
   async getByEmail(data: string): Promise<GetAccountOutputDTO> {
