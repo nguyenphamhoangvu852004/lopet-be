@@ -94,7 +94,6 @@ export default class AccountRepoImpl implements IAccountRepo {
         roles: true
       }
     })
-    logger.error('account', account)
     if (!account) {
       return null
     }
