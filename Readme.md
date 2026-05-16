@@ -8,6 +8,7 @@ This SRS document contains system analysis artifacts such as:
 * Use Case Diagrams
 * Sequence Diagrams
 * Business Flow Diagrams
+  
 Diagrams are provided as `.drawio` files hosted on Google Drive.
 
 Google Drive:
