@@ -3,24 +3,9 @@ Lopet Social Media Backend (lopet-be)
 ## 📌 Giới thiệu dự án
 **Lopet Social Media** là hệ thống Backend cho một nền tảng mạng xã hội hiện đại, được xây dựng với mục tiêu cung cấp hiệu năng cao, khả năng mở rộng tốt và tính bảo mật chặt chẽ. Hệ thống hỗ trợ đầy đủ các tính năng của một mạng xã hội như quản lý tài khoản, tương tác bài viết, kết bạn, nhắn tin thời gian thực và quản trị nội dung.
 ---
-## SRS Documents
-This SRS document contains system analysis artifacts such as:
-* Use Case Diagrams
-* Sequence Diagrams
-* Business Flow Diagrams
-  
-Diagrams are provided as `.drawio` files hosted on Google Drive.
-
-Google Drive:
-https://drive.google.com/file/d/18qXIFpDqR9U_MCiWyNlyDwEIiUwIVzIZ/view?usp=sharing
-
-Recommended way to access the diagrams:
-
-1. Download the `.drawio` file from Google Drive
-2. Open it using draw.io Desktop or the web version:
-   * Web: https://app.diagrams.net/
-   * Desktop: https://github.com/jgraph/drawio-desktop/releases
-3. Import or open the downloaded file
+## Tài liệu
+Link tài liệu về dự án bao gồm: SRS documents, Database Relationship, Test Cases
+Google Drive: https://drive.google.com/drive/folders/1hnx0zJlIy4CRJeKAfHtVdmDk4zSOPjhO?usp=sharing
 
 
 ## Database Relationships
