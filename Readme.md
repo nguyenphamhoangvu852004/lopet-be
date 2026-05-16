@@ -1,20 +1,16 @@
 Lopet Social Media Backend (lopet-be)
-**Tài liệu được viết bởi AI**
 ## 📌 Giới thiệu dự án
-**Lopet Social Media** là hệ thống Backend cho một nền tảng mạng xã hội hiện đại, được xây dựng với mục tiêu cung cấp hiệu năng cao, khả năng mở rộng tốt và tính bảo mật chặt chẽ. Hệ thống hỗ trợ đầy đủ các tính năng của một mạng xã hội như quản lý tài khoản, tương tác bài viết, kết bạn, nhắn tin thời gian thực và quản trị nội dung.
+**Lopet Social Media (BE)** là hệ thống Backend cho một nền tảng mạng xã hội hiện đại, khả năng mở rộng tốt và tính bảo mật chặt chẽ. Hệ thống hỗ trợ đầy đủ các tính năng của một mạng xã hội như quản lý tài khoản, tương tác bài viết, kết bạn, nhắn tin thời gian thực và quản trị nội dung, quản lý quảng cáo.
 ---
+
 ## Tài liệu
 Link tài liệu về dự án bao gồm: SRS documents, Database Relationship, Test Cases
 Google Drive: https://drive.google.com/drive/folders/1hnx0zJlIy4CRJeKAfHtVdmDk4zSOPjhO?usp=sharing
-
 
 ## Database Relationships
 <img width="922" height="742" alt="image" src="https://github.com/user-attachments/assets/16f4da67-e482-4e31-8197-e661e99a3dc9" />
 
 ## 🛠 Công nghệ sử dụng
-
-Hệ thống được phát triển dựa trên các công nghệ mạnh mẽ và phổ biến:
-
 - **Ngôn ngữ:** [TypeScript](https://www.typescriptlang.org/) (Đảm bảo type safety và code sạch).
 - **Framework:** [Express.js](https://expressjs.com/) (Nhanh, nhẹ và linh hoạt).
 - **ORM:** [TypeORM](https://typeorm.io/) (Quản lý database theo mô hình OOP).
@@ -98,9 +94,10 @@ npm run prettier:fix  # Tự động định dạng code
 
 ## 📋 Các tính năng chính
 - **Auth:** Đăng ký, Đăng nhập, Quên mật khẩu, Xác thực OTP qua Email.
-- **Social:** Đăng bài (ảnh/video), Like, Comment, Chia sẻ bài viết.
+- **Social:** Đăng bài (ảnh/video), Like, Comment
 - **Networking:** Gửi lời mời kết bạn, Chấp nhận/Từ chối, Chặn người dùng.
-- **Messaging:** Chat cá nhân/nhóm thời gian thực với Socket.io.
+- **Group:** Tạo nhóm private, mời tham gia, quản lý bài viết nhóm.
+- **Messaging:** Chat cá nhân thời gian thực với Socket.io.
 - **Discovery:** Tìm kiếm người dùng, nhóm và bài viết.
 - **Admin:** Quản lý người dùng, bài viết vi phạm, báo cáo người dùng.
 
