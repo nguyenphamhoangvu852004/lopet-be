@@ -14,7 +14,7 @@ Diagrams are provided as `.drawio` files hosted on Google Drive.
 Google Drive:
 https://drive.google.com/file/d/18qXIFpDqR9U_MCiWyNlyDwEIiUwIVzIZ/view?usp=sharing
 
-How to access the diagrams:
+Recommended way to access the diagrams:
 
 1. Download the `.drawio` file from Google Drive
 2. Open it using draw.io Desktop or the web version:
