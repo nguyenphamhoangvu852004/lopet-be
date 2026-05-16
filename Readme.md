@@ -104,4 +104,4 @@ npm run prettier:fix  # Tự động định dạng code
 ---
 
 ## 📝 Giấy phép
-Dự án được phát triển cho mục đích học tập và xây dựng nền tảng mạng xã hội cá nhân.
+Là dự án tốt nghiệp đại học, được phát triển cho mục đích học tập, rèn luyện, phát triển kỹ năng
