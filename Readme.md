@@ -1,6 +1,8 @@
 Lopet Social Media Backend (lopet-be)
 ## 📌 Giới thiệu dự án
 **Lopet Social Media (BE)** là hệ thống Backend cho một nền tảng mạng xã hội hiện đại, khả năng mở rộng tốt và tính bảo mật chặt chẽ. Hệ thống hỗ trợ đầy đủ các tính năng của một mạng xã hội như quản lý tài khoản, tương tác bài viết, kết bạn, nhắn tin thời gian thực và quản trị nội dung, quản lý quảng cáo.
+
+[Đi đến dự án giao diện Lopet_Fe](https://github.com/cauvupham11/Lopet_FE) (Author: cauvupham11)
 ---
 
 ## Tài liệu
