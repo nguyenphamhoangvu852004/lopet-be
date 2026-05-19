@@ -54,9 +54,9 @@ src/
 ## 🚀 Hướng dẫn chạy dự án
 
 ### 1. Yêu cầu hệ thống
-- **Node.js** (Phiên bản 18 trở lên)
-- **MySQL Server**
-- **Redis Server**
+- **Node.js**
+- **MySQL**
+- **Redis**
 
 ### 2. Cài đặt dependencies
 Mở terminal tại thư mục gốc và chạy:
