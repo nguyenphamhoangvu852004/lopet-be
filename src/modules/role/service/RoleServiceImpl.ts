@@ -2,7 +2,6 @@
 import { GetListRoleOutputDTO } from '~/modules/role/dto/Get'
 import IRoleRepo from '../repo/IRoleRepo'
 import IRoleService from './IRoleService'
-import { handleThrowError } from '~/utils/handle.util'
 
 export default class RoleServiceImpl implements IRoleService {
   repo: IRoleRepo
@@ -10,23 +9,15 @@ export default class RoleServiceImpl implements IRoleService {
     this.repo = repo
   }
   async getList(): Promise<GetListRoleOutputDTO[]> {
-    try {
-      const response = await this.repo.getList()
-      const listDto: GetListRoleOutputDTO[] = []
-      for (const i of response) {
-        listDto.push(new GetListRoleOutputDTO({ id: i.id, name: i.name }))
-      }
-      return listDto
-    } catch (error) {
-      handleThrowError(error)
+    const response = await this.repo.getList()
+    const listDto: GetListRoleOutputDTO[] = []
+    for (const i of response) {
+      listDto.push(new GetListRoleOutputDTO({ id: i.id, name: i.name }))
     }
+    return listDto
   }
   async createRoles(): Promise<any> {
-    try {
-      const list = await this.repo.createRoles()
-      return list
-    } catch (error) {
-      handleThrowError(error)
-    }
+    const list = await this.repo.createRoles()
+    return list
   }
 }

@@ -2,27 +2,26 @@ import { redis } from '~/config/appDataSource'
 import { transporter } from '~/config/emailConfig'
 import { BadRequest } from '~/error/error.custom'
 import { IEmailService } from '~/modules/email/services/IEmailService'
-import { handleThrowError } from '~/utils/handle.util'
+
 import { generateOTP } from '~/utils/otp.util'
 
 export default class EmailServiceImpl implements IEmailService {
   async sendOTP(email: string): Promise<void> {
-    try {
-      const otpKey = `otp:${email}`
+    const otpKey = `otp:${email}`
 
-      const existingOtp = await redis.get(otpKey)
-      if (existingOtp) throw new BadRequest()
+    const existingOtp = await redis.get(otpKey)
+    if (existingOtp) throw new BadRequest()
 
-      const otp = generateOTP()
+    const otp = generateOTP()
 
-      // Lưu OTP vào Redis với TTL 2 phút (120 giây)
-      await redis.set(otpKey, otp, { EX: 120 })
+    // Lưu OTP vào Redis với TTL 2 phút (120 giây)
+    await redis.set(otpKey, otp, { EX: 120 })
 
-      // Gửi email
-      const response = await transporter.sendMail({
-        to: email,
-        subject: 'Mã xác thực OTP của bạn',
-        html: `
+    // Gửi email
+    const response = await transporter.sendMail({
+      to: email,
+      subject: 'Mã xác thực OTP của bạn',
+      html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
       <h2 style="color: #333;">Xác thực tài khoản</h2>
       <p>Chào bạn,</p>
@@ -35,30 +34,23 @@ export default class EmailServiceImpl implements IEmailService {
       <p><strong>Đội ngũ hỗ trợ</strong></p>
     </div>
   `
-      })
-      if (!response) throw new BadRequest('Send email failed')
-      return
-    } catch (error) {
-      handleThrowError(error)
-    }
+    })
+    if (!response) throw new BadRequest('Send email failed')
+    return
   }
 
   async verify(data: { email: string; otp: string }): Promise<void> {
-    try {
-      const { email, otp } = data
-      const otpKey = `otp:${email}`
+    const { email, otp } = data
+    const otpKey = `otp:${email}`
 
-      // Lấy OTP từ Redis
-      const savedOtp = await redis.get(otpKey)
-      if (!savedOtp) throw new BadRequest('OTP đã hết hạn hoặc không tồn tại.')
-      if (savedOtp !== otp) throw new BadRequest('OTP không chính xác.')
+    // Lấy OTP từ Redis
+    const savedOtp = await redis.get(otpKey)
+    if (!savedOtp) throw new BadRequest('OTP đã hết hạn hoặc không tồn tại.')
+    if (savedOtp !== otp) throw new BadRequest('OTP không chính xác.')
 
-      // Sau khi xác thực, xoá OTP và set flag verified
-      await redis.del(otpKey)
-      await redis.set(`email_verified:${email}`, 'true', { EX: 300 }) // TTL: 5 phút
-      return
-    } catch (error) {
-      handleThrowError(error)
-    }
+    // Sau khi xác thực, xoá OTP và set flag verified
+    await redis.del(otpKey)
+    await redis.set(`email_verified:${email}`, 'true', { EX: 300 }) // TTL: 5 phút
+    return
   }
 }

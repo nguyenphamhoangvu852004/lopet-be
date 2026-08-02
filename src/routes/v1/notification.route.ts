@@ -5,15 +5,36 @@ import { NotificationController } from '~/modules/notification/controller'
 import { NotificationsRepoImpl } from '~/modules/notification/repositories/NotificationRepoImpl'
 import { NotificationServiceImpl } from '~/modules/notification/services/NotificationServiceImpl'
 import ProfileRepoImpl from '~/modules/profile/repositories/ProfileRepoImpl'
+import { asyncHandler } from '~/utils/asyncHandler'
 
 export const notificationRouter = Router()
 const notificationRepo = new NotificationsRepoImpl()
 const accountRepo = new AccountRepoImpl()
 const profileRepo = new ProfileRepoImpl()
-const notificationService = new NotificationServiceImpl(notificationRepo, accountRepo, profileRepo)
+const notificationService = new NotificationServiceImpl(
+  notificationRepo,
+  accountRepo,
+  profileRepo
+)
 const controller = new NotificationController(notificationService)
 
-notificationRouter.post('/', verifyToken(), controller.create.bind(controller))
-notificationRouter.get('/:id', verifyToken(), controller.getDetail.bind(controller))
-notificationRouter.get('/me/:id', verifyToken(), controller.getList.bind(controller))
-notificationRouter.put('/:id', verifyToken(), controller.update.bind(controller))
+notificationRouter.post(
+  '/',
+  asyncHandler(verifyToken()),
+  asyncHandler(controller.create.bind(controller))
+)
+notificationRouter.get(
+  '/:id',
+  asyncHandler(verifyToken()),
+  asyncHandler(controller.getDetail.bind(controller))
+)
+notificationRouter.get(
+  '/me/:id',
+  asyncHandler(verifyToken()),
+  asyncHandler(controller.getList.bind(controller))
+)
+notificationRouter.put(
+  '/:id',
+  asyncHandler(verifyToken()),
+  asyncHandler(controller.update.bind(controller))
+)

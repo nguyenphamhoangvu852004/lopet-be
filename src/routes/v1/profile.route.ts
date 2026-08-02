@@ -6,6 +6,7 @@ import { AccountServiceImpl } from '~/modules/account/services/AccountServiceImp
 import { ProfileController } from '~/modules/profile/controller'
 import ProfileRepoImpl from '~/modules/profile/repositories/ProfileRepoImpl'
 import ProfileServiceImpl from '~/modules/profile/services/ProfileServiceImpl'
+import { asyncHandler } from '~/utils/asyncHandler'
 
 export const profileRouter = Router()
 
@@ -21,14 +22,19 @@ profileRouter.post(
     { name: 'avatar', maxCount: 1 },
     { name: 'cover', maxCount: 1 }
   ]),
-  controller.create.bind(controller)
+  asyncHandler(controller.create.bind(controller))
 )
 
-profileRouter.get('/', controller.getList.bind(controller))
-profileRouter.post('/:id', controller.setToAccount.bind(controller))
-profileRouter.get('/:id', controller.getById.bind(controller))
-profileRouter.get('/accounts/:id', controller.getByAccountId.bind(controller))
-
+profileRouter.get('/', asyncHandler(controller.getList.bind(controller)))
+profileRouter.post(
+  '/:id',
+  asyncHandler(controller.setToAccount.bind(controller))
+)
+profileRouter.get('/:id', asyncHandler(controller.getById.bind(controller)))
+profileRouter.get(
+  '/accounts/:id',
+  asyncHandler(controller.getByAccountId.bind(controller))
+)
 profileRouter.patch(
   '/:id',
   verifyToken(),
@@ -36,5 +42,5 @@ profileRouter.patch(
     { name: 'avatar', maxCount: 1 },
     { name: 'cover', maxCount: 1 }
   ]),
-  controller.update.bind(controller)
+  asyncHandler(controller.update.bind(controller))
 )

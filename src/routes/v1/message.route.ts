@@ -6,6 +6,7 @@ import { MessageController } from '~/modules/message/controller'
 import { MessageRepoImpl } from '~/modules/message/repositories/MessageRepoImpl'
 import MessageServiceImpl from '~/modules/message/services/MessageServiceImpl'
 import ProfileRepoImpl from '~/modules/profile/repositories/ProfileRepoImpl'
+import { asyncHandler } from '~/utils/asyncHandler'
 
 export const messageRouter = Router()
 
@@ -15,7 +16,24 @@ const profileRepo = new ProfileRepoImpl()
 const service = new MessageServiceImpl(messageRepo, accountRepo, profileRepo)
 const controller = new MessageController(service)
 
-messageRouter.get('/:id', verifyToken(), controller.getDetail.bind(controller))
-messageRouter.get('/me/:id', verifyToken(), controller.getListMessage.bind(controller))
-messageRouter.post('/', verifyToken(), upload.single('image'), controller.createMessage.bind(controller))
-messageRouter.patch('/status/:id', verifyToken(), controller.updateStatus.bind(controller))
+messageRouter.get(
+  '/:id',
+  asyncHandler(verifyToken()),
+  asyncHandler(controller.getDetail.bind(controller))
+)
+messageRouter.get(
+  '/me/:id',
+  asyncHandler(verifyToken()),
+  asyncHandler(controller.getListMessage.bind(controller))
+)
+messageRouter.post(
+  '/',
+  asyncHandler(verifyToken()),
+  upload.single('image'),
+  asyncHandler(controller.createMessage.bind(controller))
+)
+messageRouter.patch(
+  '/status/:id',
+  asyncHandler(verifyToken()),
+  asyncHandler(controller.updateStatus.bind(controller))
+)

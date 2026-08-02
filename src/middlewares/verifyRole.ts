@@ -14,22 +14,16 @@ interface UserPayload {
 
 export function verifyRole(requiedRoles: ROLENAME[]) {
   return function (req: Request, res: Response, next: NextFunction) {
-    try {
-      const userRoles = (req.user as UserPayload).roles.map((role) => role)
+    const userRoles = (req.user as UserPayload).roles.map((role) => role)
 
-      const hasPermission = requiedRoles.some((role) => role)
-      log('hasPermission', hasPermission)
-      log('userRoles', userRoles)
-      if (!hasPermission) {
-        res.status(403).json({ status: 403, message: 'Forbidden: No permission' })
-        return
-      }
-
-      next()
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      res.status(401).json({ status: 401, message })
+    const hasPermission = requiedRoles.some((role) => role)
+    log('hasPermission', hasPermission)
+    log('userRoles', userRoles)
+    if (!hasPermission) {
+      res.status(403).json({ status: 403, message: 'Forbidden: No permission' })
       return
     }
+
+    next()
   }
 }

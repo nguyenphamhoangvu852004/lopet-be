@@ -8,18 +8,14 @@ export function setupSocket(io: Server) {
     const token = socket.handshake.auth.token
     if (!token) return next(new Error('Authentication error'))
 
-    try {
-      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string)
-      if (typeof decoded !== 'object' || decoded === null || !('id' in decoded)) {
-        return next(new Error('Invalid token payload'))
-      }
-
-      const payload = decoded as { id: number }
-      socket.data.userId = payload.id
-      return next()
-    } catch (err) {
-      return next(new Error('Invalid token'))
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string)
+    if (typeof decoded !== 'object' || decoded === null || !('id' in decoded)) {
+      return next(new Error('Invalid token payload'))
     }
+
+    const payload = decoded as { id: number }
+    socket.data.userId = payload.id
+    return next()
   })
 
   // Xử lý khi client kết nối
@@ -38,4 +34,11 @@ export function setupSocket(io: Server) {
       console.log(`User ${userId} disconnected`)
     })
   })
+}
+
+export const socketIOMiddleware = (socketIO) => {
+  return (req, res, next) => {
+    res.io = socketIO
+    next()
+  }
 }

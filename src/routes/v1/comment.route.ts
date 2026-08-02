@@ -7,15 +7,33 @@ import { CommentRepoImpl } from '~/modules/comment/repositories/CommentRepoImpl'
 import { CommentServiceImpl } from '~/modules/comment/services/CommentServiceImpl'
 import PostRepoImpl from '~/modules/post/repositories/PostRepoImpl'
 import ProfileRepoImpl from '~/modules/profile/repositories/ProfileRepoImpl'
+import { asyncHandler } from '~/utils/asyncHandler'
 
 const commentRepo = new CommentRepoImpl()
 const accountRepo = new AccountRepoImpl()
 const postRepo = new PostRepoImpl()
 const profileRepo = new ProfileRepoImpl()
-const service = new CommentServiceImpl(commentRepo, accountRepo, postRepo, profileRepo)
+const service = new CommentServiceImpl(
+  commentRepo,
+  accountRepo,
+  postRepo,
+  profileRepo
+)
 const controller = new CommentController(service)
 export const commentRouter = Router()
 
-commentRouter.post('/', verifyToken(), upload.single('image'), controller.create.bind(controller))
-commentRouter.get('/:postId', controller.getCommentAllFromPost.bind(controller))
-commentRouter.delete('/:commentId', verifyToken(), controller.delete.bind(controller))
+commentRouter.post(
+  '/',
+  verifyToken(),
+  upload.single('image'),
+  asyncHandler(controller.create.bind(controller))
+)
+commentRouter.get(
+  '/:postId',
+  asyncHandler(controller.getCommentAllFromPost.bind(controller))
+)
+commentRouter.delete(
+  '/:commentId',
+  verifyToken(),
+  asyncHandler(controller.delete.bind(controller))
+)

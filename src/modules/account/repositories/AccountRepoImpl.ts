@@ -6,6 +6,7 @@ import { Accounts } from '~/entities/accounts.entity'
 import { FriendShips } from '~/entities/friendShips.entity'
 import { Profiles } from '~/entities/profiles.entity'
 import { ROLENAME, Roles } from '~/entities/roles.entity'
+import { NotFound } from '~/error/error.custom'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 
 export default class AccountRepoImpl implements IAccountRepo {
@@ -27,25 +28,21 @@ export default class AccountRepoImpl implements IAccountRepo {
     return false
   }
   async setRolesToAccount(userId: number, roles: string[]): Promise<Accounts> {
-    try {
-      const account = await this.accountsRepo.findOneBy({ id: userId })
-      if (!account) {
-        throw new Error('Account not found')
-      }
-      const listRole: Roles[] = []
-      for (const item of roles) {
-        const role = await this.roleRepo.findOneBy({ name: item as ROLENAME })
-        if (!role) {
-          throw new Error('Role not found')
-        }
-        listRole.push(role)
-      }
-      account.roles = listRole
-      await this.accountsRepo.save(account)
-      return account
-    } catch (error: Error | any) {
-      throw new Error(error.message)
+    const account = await this.accountsRepo.findOneBy({ id: userId })
+    if (!account) {
+      throw new Error('Account not found')
     }
+    const listRole: Roles[] = []
+    for (const item of roles) {
+      const role = await this.roleRepo.findOneBy({ name: item as ROLENAME })
+      if (!role) {
+        throw new Error('Role not found')
+      }
+      listRole.push(role)
+    }
+    account.roles = listRole
+    await this.accountsRepo.save(account)
+    return account
   }
   async findById(id: number): Promise<Accounts | null> {
     const account = await this.accountsRepo.findOne({
@@ -122,7 +119,10 @@ export default class AccountRepoImpl implements IAccountRepo {
     return deletedEntity
   }
 
-  async getSuggest(currentAccountId: number, limit: number): Promise<Accounts[]> {
+  async getSuggest(
+    currentAccountId: number,
+    limit: number
+  ): Promise<Accounts[]> {
     // Lấy cái account ra
     const accounts = await this.accountsRepo.findOne({
       where: { id: currentAccountId },
@@ -139,7 +139,10 @@ export default class AccountRepoImpl implements IAccountRepo {
     // Tìm tất cả các mối quan hệ friendship (bất kể status gì)
     // mà currentAccount có liên quan (là sender hoặc receiver)
     const friendShips = await this.friendShipRepo.find({
-      where: [{ sender: { id: currentAccountId } }, { receiver: { id: currentAccountId } }]
+      where: [
+        { sender: { id: currentAccountId } },
+        { receiver: { id: currentAccountId } }
+      ]
     })
 
     // Lấy danh sách ID của những người đã có quan hệ

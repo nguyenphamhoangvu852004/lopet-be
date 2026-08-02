@@ -19,88 +19,66 @@ export default class ProfileRepoImpl implements IProfileRepo {
     return this.profileRepo.find({ where: { fullName } })
   }
   async findAll(data: GetListInputDTO): Promise<Profiles[]> {
-    try {
-      const { id, fullName } = data
-      const whereClause: any = {}
+    const { id, fullName } = data
+    const whereClause: any = {}
 
-      if (id) {
-        whereClause.id = id
-      }
-
-      if (fullName) {
-        // tìm gần đúng, không phân biệt hoa thường
-        whereClause.fullName = ILike(`%${fullName}%`)
-      }
-
-      const profiles: Profiles[] = await this.profileRepo.find({
-        where: whereClause
-      })
-      return profiles
-    } catch (error) {
-      logger.error(error)
-      return []
+    if (id) {
+      whereClause.id = id
     }
+
+    if (fullName) {
+      // tìm gần đúng, không phân biệt hoa thường
+      whereClause.fullName = ILike(`%${fullName}%`)
+    }
+
+    const profiles: Profiles[] = await this.profileRepo.find({
+      where: whereClause
+    })
+    return profiles
   }
   async findById(id: number): Promise<Profiles | null> {
-    try {
-      const profile: Profiles | null = await this.profileRepo.findOneBy({ id })
-      if (!profile) {
-        return null
-      }
-      return profile
-    } catch (error) {
-      logger.error(error)
+    const profile: Profiles | null = await this.profileRepo.findOneBy({ id })
+    if (!profile) {
       return null
     }
+    return profile
   }
 
   async create(data: Profiles): Promise<Profiles | null> {
-    try {
-      const createdEntity = await this.profileRepo.save(data)
-      if (!createdEntity) {
-        return null
-      }
-      return createdEntity
-    } catch (error) {
-      logger.error(error)
+    const createdEntity = await this.profileRepo.save(data)
+    if (!createdEntity) {
       return null
     }
+    return createdEntity
   }
 
   async update(id: number, data: Profiles): Promise<Profiles | null> {
-    try {
-      const updateResult = await this.profileRepo.update(id, data)
-      if (updateResult.affected === 0) {
-        return null
-      }
-      const updatedEntity = await this.profileRepo.findOneBy({ id })
-      return updatedEntity
-    } catch (error) {
-      logger.error(error)
+    const updateResult = await this.profileRepo.update(id, data)
+    if (updateResult.affected === 0) {
       return null
     }
+    const updatedEntity = await this.profileRepo.findOneBy({ id })
+    return updatedEntity
   }
 
   async findByAccountId(id: number): Promise<Profiles | null> {
-    try {
-      const profile: Profiles | null = await this.profileRepo.findOne({
-        where: {
-          account: {
-            id: id
-          }
+    const profile: Profiles | null = await this.profileRepo.findOne({
+      where: {
+        account: {
+          id: id
         }
-      })
-      if (!profile) {
-        return null
       }
-      return profile
-    } catch (error) {
-      logger.error(error)
+    })
+    if (!profile) {
       return null
     }
+    return profile
   }
 
-  async setToAccount(acountId: number, profile: Profiles): Promise<Profiles | null> {
+  async setToAccount(
+    acountId: number,
+    profile: Profiles
+  ): Promise<Profiles | null> {
     const account = await this.accountRepo.findOneBy({ id: acountId })
     if (!account) {
       return null
