@@ -4,7 +4,7 @@ services:
   mysql-docker:
     image: mysql:8.0
     container_name: mysql-docker
-    restart: always
+    restart: "no"
     environment:
       - MYSQL_ROOT_PASSWORD=nguyenvu
       - MYSQL_DATABASE=socialmedia
@@ -17,6 +17,7 @@ services:
   redis:
     image: redis:7.2
     container_name: redis
+    restart: "no"
     ports:
       - '6379:6379'
     networks:
@@ -26,7 +27,7 @@ services:
     container_name: lopet-backend-build
     # image: nguyenphamhoangvu852004/lopet-backend:latest
     build: .
-    restart: always
+    restart: "no"
     env_file:
       - .build.env
     depends_on:

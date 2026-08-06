@@ -1,12 +1,12 @@
-import nodemailer from 'nodemailer'
-import { environment } from '~/config/env'
+import nodemailer from "nodemailer";
+import { environment } from "~/config/env";
 
 export const transporter = nodemailer.createTransport({
   host: environment.MAIL_HOST,
   port: Number(environment.MAIL_PORT),
-  secure: false,
+  secure: Number(environment.MAIL_PORT) == 465 ? true : false,
   auth: {
     user: environment.MAIL_USER,
-    pass: environment.MAIL_PASS
-  }
-})
+    pass: environment.MAIL_PASS,
+  },
+});

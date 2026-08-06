@@ -1,14 +1,15 @@
-import { HttpError } from '~/error/error.custom'
+import { HttpError } from "~/error/error.custom";
 
 type ExceptionResponse = {
-  statusCode: number
-  message: string
-}
+  statusCode: number;
+  message: string;
+};
 
 export const globalExceptionMiddleware = (error: HttpError, req, res, next) => {
+  const statusCode = error.code ?? 500;
   const response: ExceptionResponse = {
-    statusCode: error.code,
-    message: error.message
-  }
-  res.status(error.code).json(response)
-}
+    statusCode: statusCode,
+    message: error.message,
+  };
+  res.status(statusCode).json(response);
+};

@@ -31,9 +31,9 @@ export default class MessageServiceImpl implements IMessageService {
     data: GetListMessageInputDTO
   ): Promise<GetMessageOutputDTO[]> {
     const sender = await this.accountRepo.findById(data.senderId)
-    if (!sender) throw new Error('Sender not found')
+    if (!sender) throw new NotFound('Sender not found')
     const receiver = await this.accountRepo.findById(data.receiverId)
-    if (!receiver) throw new Error('Receiver not found')
+    if (!receiver) throw new NotFound('Receiver not found')
 
     const response = await this.messageRepo.getListMessage(
       data.senderId,

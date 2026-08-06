@@ -1,0 +1,1806 @@
+##############################################################
+#                                                            #
+#   req.user AUDIT REPORT                                    #
+#   Project : lopet-be (Express + TypeScript + TypeORM)      #
+#   Date    : 2026-08-06                                     #
+#   Type    : STATIC ANALYSIS ONLY - NO CODE WAS MODIFIED    #
+#                                                            #
+##############################################################
+
+SCOPE
+-----
+Analyzed recursively:  src/**
+Excluded:              node_modules/**, dist/**, .git/**, coverage/**, generated files
+
+GOAL
+----
+Find every endpoint / service / function that is already protected by
+verifyToken() (so the authenticated identity is available at req.user)
+but STILL asks the client to supply the authenticated user's own
+identifier (accountId / userId / id / owner / senderId / actorId ...)
+through body, params, query, DTO or validation schema.
+
+
+##############################################################
+#  BACKGROUND FACTS ESTABLISHED DURING THE TRACE             #
+##############################################################
+
+1. AUTH MIDDLEWARE
+   File: src/middlewares/verifyToken.ts
+   verifyToken() decodes the JWT and assigns:
+
+       const userPayload: UserPayload = {
+         id: decoded.id,
+         email: decoded.email,
+         roles: []
+       }
+       req.user = userPayload
+
+   => req.user.id IS the authenticated Accounts.id (primary key of the
+      accounts table). Confirmed via src/utils/jwt.util.ts where the
+      token payload is built from { id, email, roles }.
+
+   This means: for EVERY route below that carries verifyToken(), the
+   authenticated accountId is already available server-side and does
+   not need to come from the client.
+
+2. TWO ENDPOINTS ALREADY DO IT CORRECTLY (reference implementations)
+
+   - src/modules/post/controller.ts -> create()
+         accountId: req.user.id
+   - src/modules/message/controller.ts -> createMessage()
+         senderId: req.user.id
+
+   These prove the pattern is intended in this codebase; the findings
+   below are inconsistencies with the project's own convention.
+
+3. verifyRole() IS EFFECTIVELY A NO-OP  (affects confidence ratings)
+   File: src/middlewares/verifyRole.ts
+
+       const hasPermission = requiedRoles.some((role) => role)
+
+   This maps over the REQUIRED roles, not the user's roles, and returns
+   true whenever the required-roles array is non-empty. Additionally
+   verifyToken() always sets roles: [] (empty), so no real role data is
+   ever present in req.user.
+
+   CONSEQUENCE: routes that "look" admin-protected (groups/*,
+   advertisements/*, reports PUT) are in practice reachable by ANY
+   authenticated user. They were therefore NOT auto-excluded as "admin
+   endpoints"; they are reported at MEDIUM confidence with this caveat
+   stated explicitly.
+
+4. Only genuinely admin-intent operations were excluded per the brief:
+   POST /v1/accounts/ban/:id, POST /v1/accounts/unban/:id,
+   PUT /v1/accounts/ (setRolesToAccount), PUT /v1/reports/:targetId.
+   Public routes (auth, email, all unauthenticated GETs, profile
+   create/setToAccount) were excluded as instructed.
+
+5. Socket.IO layer (src/middlewares/socketio.ts) was checked and is
+   CORRECT - it derives socket.data.userId from the verified token and
+   never trusts a client-supplied id. No findings there.
+
+
+##############################################################
+#  FINDINGS                                                  #
+##############################################################
+
+======================================================
+File:
+src/modules/post/controller.ts
+
+Function:
+update()
+
+Route:
+PUT /v1/posts/:postId
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const data = req.body;
+const dto = new UpdatePostInputDTO({
+  postId: Number(postId),
+  owner: Number(data.owner),
+  ...
+});
+
+Problem:
+
+Authenticated user already exists in req.user but `owner` is still
+requested from the request body. This is the identifier the service
+uses as the ownership proof:
+
+  PostServiceImpl.update() line 55:
+    if (post.accounts.id !== Number(data.owner))
+      throw new Forbidden('You are not the owner of this post')
+
+Because `owner` is client-controlled, the ownership check compares two
+client-influenced values instead of comparing the post owner against
+the authenticated user. Any authenticated user can edit any post by
+sending the victim's accountId as `owner`.
+
+Recommendation:
+
+Use:
+
+const owner = req.user.id;
+
+instead of accepting `owner` from the request body, and drop `owner`
+from UpdatePostInputDTO's client-facing surface.
+
+Call chain:
+
+Router (src/routes/v1/post.route.ts)
+→ verifyToken()
+→ PostController.update()
+→ PostServiceImpl.update()
+→ PostRepoImpl.getOne() / PostRepoImpl.update()
+→ PostMediaRepositoriesImpl.deleteNotIn() / create()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/post/controller.ts
+
+Function:
+like()
+
+Route:
+POST /v1/posts/like
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { postId, accountId } = req.body;
+const dto = new LikePostInputDTO({
+  accountId: accountId,
+  postId: postId
+});
+
+Problem:
+
+Authenticated user already exists in req.user but accountId is still
+requested from the request body. The like is persisted against that
+client-supplied account, so a user can create likes on behalf of any
+other account. The sibling method create() in this same file already
+uses req.user.id, so this is internally inconsistent.
+
+Recommendation:
+
+Use:
+
+const accountId = req.user.id;
+
+instead of accepting accountId from request body.
+
+Call chain:
+
+Router (src/routes/v1/post.route.ts)
+→ verifyToken()
+→ PostController.like()
+→ PostServiceImpl.like()
+→ AccountRepoImpl.findById(data.accountId)
+→ PostLikeRepoImpl.findByAccountAndPost() / create()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/post/controller.ts
+
+Function:
+unlike()
+
+Route:
+POST /v1/posts/unlike
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { postId, accountId } = req.body;
+const dto = new UnlikePostInputDTO({
+  accountId: accountId,
+  postId: postId
+});
+
+Problem:
+
+Authenticated user already exists in req.user but accountId is still
+requested from the request body. A user can remove another account's
+like by supplying that account's id.
+
+Recommendation:
+
+Use:
+
+const accountId = req.user.id;
+
+instead of accepting accountId from request body.
+
+Call chain:
+
+Router (src/routes/v1/post.route.ts)
+→ verifyToken()
+→ PostController.unlike()
+→ PostServiceImpl.unLike()
+→ AccountRepoImpl.findById(data.accountId)
+→ PostLikeRepoImpl.findByAccountAndPost() / delete()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/comment/controller.ts
+
+Function:
+create()
+
+Route:
+POST /v1/comments
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { accountId, content, replyCommentId, postId } = req.body;
+const dto = new CreateCommentInputDTO({
+  accountId: accountId,
+  ...
+});
+
+Problem:
+
+Authenticated user already exists in req.user but accountId is still
+requested from the request body. The comment is stored with that
+account as author, allowing comment forgery under another user's
+identity.
+
+Recommendation:
+
+Use:
+
+const accountId = req.user.id;
+
+instead of accepting accountId from request body.
+
+Call chain:
+
+Router (src/routes/v1/comment.route.ts)
+→ verifyToken()
+→ CommentController.create()
+→ CommentServiceImpl.create()
+→ AccountRepoImpl.findById(data.accountId)
+→ CommentRepoImpl.create()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/comment/controller.ts
+
+Function:
+delete()
+
+Route:
+DELETE /v1/comments/:commentId
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { commentId } = req.params;
+const { owner } = req.body;
+const dto = new DeleteCommentInputDTO({
+  commentId: Number(commentId),
+  owner: owner
+});
+
+Problem:
+
+Authenticated user already exists in req.user but `owner` is still
+requested from the request body. Worse, CommentServiceImpl.delete()
+only verifies that the supplied owner EXISTS as an account - it never
+compares it to comment.account.id:
+
+  const account = await this.accountRepo.findById(data.owner)   // line 39
+  ...
+  const response = await this.commentRepo.delete(comment.id)     // line 44
+
+Any authenticated user can therefore delete any comment by sending any
+valid accountId.
+
+Recommendation:
+
+Use:
+
+const owner = req.user.id;
+
+instead of accepting `owner` from request body (and compare it against
+the comment's author in the service).
+
+Call chain:
+
+Router (src/routes/v1/comment.route.ts)
+→ verifyToken()
+→ CommentController.delete()
+→ CommentServiceImpl.delete()
+→ CommentRepoImpl.findCommentById() / AccountRepoImpl.findById()
+→ CommentRepoImpl.delete()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/friendShip/controller.ts
+
+Function:
+create()
+
+Route:
+POST /v1/friendships
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { senderId, receiverId } = req.body;
+const dto = new CreateFriendShipInputDTO({
+  senderId: senderId,
+  receiverId: receiverId
+});
+
+Problem:
+
+Authenticated user already exists in req.user but senderId is still
+requested from the request body. The sender of a friend request is by
+definition the caller, so a user can send friend requests in someone
+else's name. (receiverId legitimately comes from the client.)
+
+Recommendation:
+
+Use:
+
+const senderId = req.user.id;
+
+instead of accepting senderId from request body.
+
+Call chain:
+
+Router (src/routes/v1/friendShip.route.ts)
+→ verifyToken()
+→ FriendShipController.create()
+→ FriendShipServiceImpl.create()
+→ AccountRepoImpl.findById(senderId) / findById(receiverId)
+→ FriendShipRepositoriesImpl.create()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/friendShip/controller.ts
+
+Function:
+accept()
+
+Route:
+POST /v1/friendships/accept
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { senderId, receiverId } = req.body;
+const dto = new ChangeStatusFriendShipInputDTO({
+  receiverId: receiverId,
+  senderId: senderId,
+  status: FRIENDSHIPSTATUS.ACCEPTED
+});
+
+Problem:
+
+Authenticated user already exists in req.user but receiverId is still
+requested from the request body. Only the RECEIVER of a pending request
+may accept it, so receiverId must be the authenticated user. As written,
+any authenticated user can accept a friend request addressed to someone
+else. FriendShipServiceImpl.changeStatus() performs no caller check -
+it looks the pair up and flips the status.
+
+Recommendation:
+
+Use:
+
+const receiverId = req.user.id;
+
+instead of accepting receiverId from request body.
+
+Call chain:
+
+Router (src/routes/v1/friendShip.route.ts)
+→ verifyToken()
+→ FriendShipController.accept()
+→ FriendShipServiceImpl.changeStatus()
+→ FriendShipRepositoriesImpl.findBySenderAndReceiver()
+→ FriendShipRepositoriesImpl.changeStatus()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/friendShip/controller.ts
+
+Function:
+reject()
+
+Route:
+POST /v1/friendships/reject
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { senderId, receiverId } = req.body;
+const dto = new ChangeStatusFriendShipInputDTO({
+  receiverId: receiverId,
+  senderId: senderId,
+  status: FRIENDSHIPSTATUS.REJECTED
+});
+
+Problem:
+
+Authenticated user already exists in req.user but receiverId is still
+requested from the request body. Identical issue to accept(): the
+rejecting party is always the authenticated user.
+
+Recommendation:
+
+Use:
+
+const receiverId = req.user.id;
+
+instead of accepting receiverId from request body.
+
+Call chain:
+
+Router (src/routes/v1/friendShip.route.ts)
+→ verifyToken()
+→ FriendShipController.reject()
+→ FriendShipServiceImpl.changeStatus()
+→ FriendShipRepositoriesImpl.findBySenderAndReceiver()
+→ FriendShipRepositoriesImpl.changeStatus()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/friendShip/controller.ts
+
+Function:
+getListSendFriendShips()
+
+Route:
+GET /v1/friendships/send/:id
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { id } = req.params;
+const response = await this.service.getListSendFriendShips(Number(id));
+
+Problem:
+
+Authenticated user already exists in req.user but the account id is
+still taken from the route parameter. The route comment in
+src/routes/v1/friendShip.route.ts states its purpose as "danh sách
+những người mà accountId này đã gửi lời mời kết bạn" - i.e. the
+caller's own OUTGOING friend requests. This is inherently self-scoped
+data, yet any authenticated user can read any other user's pending
+outgoing requests by changing :id.
+
+Recommendation:
+
+Use:
+
+const id = req.user.id;
+
+instead of accepting the account id from the route parameter (route
+becomes GET /v1/friendships/send/me or simply /send).
+
+Call chain:
+
+Router (src/routes/v1/friendShip.route.ts)
+→ verifyToken()
+→ FriendShipController.getListSendFriendShips()
+→ FriendShipServiceImpl.getListSendFriendShips()
+→ AccountRepoImpl.findById()
+→ FriendShipRepositoriesImpl.findAllSendFriendShips()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/friendShip/controller.ts
+
+Function:
+getListReceiveFriendShips()
+
+Route:
+GET /v1/friendships/receive/:id
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { id } = req.params;
+const response = await this.service.getListReceiveFriendShips(Number(id));
+
+Problem:
+
+Authenticated user already exists in req.user but the account id is
+still taken from the route parameter. Incoming friend invitations are
+private to their recipient; with :id under client control any
+authenticated user can enumerate another user's pending invitations.
+
+Recommendation:
+
+Use:
+
+const id = req.user.id;
+
+instead of accepting the account id from the route parameter.
+
+Call chain:
+
+Router (src/routes/v1/friendShip.route.ts)
+→ verifyToken()
+→ FriendShipController.getListReceiveFriendShips()
+→ FriendShipServiceImpl.getListReceiveFriendShips()
+→ AccountRepoImpl.findById()
+→ FriendShipRepositoriesImpl.findAllReceivedFriendRequests()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/message/controller.ts
+
+Function:
+getListMessage()
+
+Route:
+GET /v1/messages/me/:id?targetId=<n>
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { id } = req.params;
+const { targetId } = req.query;
+const inputDTO = new GetListMessageInputDTO({
+  senderId: Number(id),
+  receiverId: Number(targetId)
+});
+
+Problem:
+
+Authenticated user already exists in req.user but senderId is still
+taken from the route parameter. The route path literally says "me", so
+:id is meant to be the caller. Because it is client-supplied, any
+authenticated user can read the full private conversation between any
+two arbitrary accounts by setting :id and ?targetId freely.
+createMessage() in this same controller already uses req.user.id.
+
+Recommendation:
+
+Use:
+
+const senderId = req.user.id;
+
+instead of accepting the sender id from the route parameter.
+
+Call chain:
+
+Router (src/routes/v1/message.route.ts)
+→ verifyToken()
+→ MessageController.getListMessage()
+→ MessageServiceImpl.getListMessage()
+→ AccountRepoImpl.findById() x2
+→ MessageRepoImpl.getListMessage()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/notification/controller.ts
+
+Function:
+getList()
+
+Route:
+GET /v1/notifications/me/:id
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { id } = req.params;
+const notifications = await this.notificationService.getList(Number(id));
+
+Problem:
+
+Authenticated user already exists in req.user but the account id is
+still taken from the route parameter. As with messages, the path says
+"me". NotificationServiceImpl.getList() calls
+findListByAccountId(accountId) with no caller comparison, so any
+authenticated user can read another account's notification feed.
+
+Recommendation:
+
+Use:
+
+const id = req.user.id;
+
+instead of accepting the account id from the route parameter.
+
+Call chain:
+
+Router (src/routes/v1/notification.route.ts)
+→ verifyToken()
+→ NotificationController.getList()
+→ NotificationServiceImpl.getList()
+→ NotificationsRepoImpl.findListByAccountId()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/notification/controller.ts
+
+Function:
+create()
+
+Route:
+POST /v1/notifications
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { actorId, receptorId, content, objectType } = req.body;
+const dto = new CreateNotificationInputDTO({
+  actorId: Number(actorId),
+  receptorId: Number(receptorId),
+  ...
+});
+
+Problem:
+
+Authenticated user already exists in req.user but actorId - the user
+who PERFORMED the action that triggers the notification - is still
+requested from the request body. The actor is by definition the caller.
+As written, a user can push a notification into anyone's feed
+impersonating any other account (the result is also broadcast over
+socket.io to room `user_${receptorId}`). receptorId legitimately comes
+from the client.
+
+Recommendation:
+
+Use:
+
+const actorId = req.user.id;
+
+instead of accepting actorId from request body.
+
+Call chain:
+
+Router (src/routes/v1/notification.route.ts)
+→ verifyToken()
+→ NotificationController.create()
+→ NotificationServiceImpl.create()
+→ AccountRepoImpl.findById(actorId) / findById(receptorId)
+→ NotificationsRepoImpl.create()
+→ res.io.to(`user_${receptorId}`).emit('notification', ...)
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/report/controller.ts
+
+Function:
+create()
+
+Route:
+POST /v1/reports
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { accountId, targetId, type, reason } = req.body;
+const dto = new CreateReportInputDTO({
+  accountId: accountId,
+  targetId: targetId,
+  type: type,
+  reason: reason
+});
+
+Problem:
+
+Authenticated user already exists in req.user but accountId - the
+REPORTER - is still requested from the request body. Reports can
+therefore be filed in another user's name. targetId (the reported
+entity) legitimately comes from the client.
+
+Recommendation:
+
+Use:
+
+const accountId = req.user.id;
+
+instead of accepting accountId from request body.
+
+Call chain:
+
+Router (src/routes/v1/report.route.ts)
+→ verifyToken()
+→ ReportController.create()
+→ ReportServiceImpl.create()
+→ AccountRepoImpl.findById(report.accountId)
+→ ReportRepoImpl.create()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/account/controller.ts
+
+Function:
+getSuggest()
+
+Route:
+GET /v1/accounts/suggest/:id?limit=<n>
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { id } = req.params;
+const limit = Number(req.query.limit);
+const response = await this.service.getSuggest(Number(id), limit);
+
+Problem:
+
+Authenticated user already exists in req.user but the account id is
+still taken from the route parameter. "Suggested accounts" is a
+personalised feed computed for the caller; there is no legitimate
+reason for a client to request another account's suggestion set, and
+doing so leaks that user's social graph.
+
+Recommendation:
+
+Use:
+
+const id = req.user.id;
+
+instead of accepting the account id from the route parameter.
+
+Call chain:
+
+Router (src/routes/v1/account.route.ts)
+→ verifyToken()
+→ AccountController.getSuggest()
+→ AccountServiceImpl.getSuggest()
+→ AccountRepoImpl.getSuggest()
+
+Confidence:
+HIGH
+======================================================
+
+======================================================
+File:
+src/modules/friendShip/controller.ts
+
+Function:
+delete()
+
+Route:
+DELETE /v1/friendships
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { senderId, receiverId } = req.body;
+const response = await this.service.delete(
+  new DeleteFriendShipInputDTO({
+    receiverId: receiverId,
+    senderId: senderId
+  })
+);
+
+Problem:
+
+Authenticated user already exists in req.user but BOTH sides of the
+friendship are supplied by the client. FriendShipServiceImpl.delete()
+resolves the relation in either direction
+(findBySenderAndReceiver(senderId, receiverId) ?? the reverse) and
+deletes it without checking that the caller is a participant, so any
+authenticated user can unfriend two unrelated people.
+
+Recommendation:
+
+Use:
+
+const senderId = req.user.id;   // caller is always one side
+
+and take only the other party's id from the client; alternatively keep
+both fields but verify req.user.id === senderId || req.user.id ===
+receiverId.
+
+Call chain:
+
+Router (src/routes/v1/friendShip.route.ts)
+→ verifyToken()
+→ FriendShipController.delete()
+→ FriendShipServiceImpl.delete()
+→ AccountRepoImpl.findById() x2
+→ FriendShipRepositoriesImpl.findBySenderAndReceiver() (both directions)
+→ FriendShipRepositoriesImpl.delete()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: the endpoint is symmetric by design (either party may
+delete), so which of the two fields should be replaced by req.user.id
+depends on intent. What is certain is that at least one of them must be
+bound to the authenticated user rather than fully client-controlled.
+======================================================
+
+======================================================
+File:
+src/modules/friendShip/controller.ts
+
+Function:
+getListFriendShipsOfAccount()
+
+Route:
+GET /v1/friendships/:id
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { id } = req.params;
+const resposne = await this.service.getListFriendShipsOfAccount(Number(id));
+
+Problem:
+
+Authenticated user already exists in req.user but the account id comes
+from the route parameter. The route is authenticated, which signals
+self-scoped intent, and the two sibling routes (/send/:id, /receive/:id)
+are unambiguously self-scoped.
+
+Recommendation:
+
+Use:
+
+const id = req.user.id;
+
+if this endpoint is meant to return "my friends".
+
+Call chain:
+
+Router (src/routes/v1/friendShip.route.ts)
+→ verifyToken()
+→ FriendShipController.getListFriendShipsOfAccount()
+→ FriendShipServiceImpl.getListFriendShipsOfAccount()
+→ AccountRepoImpl.findById()
+→ FriendShipRepositoriesImpl.findAllFriendOfAccount()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: viewing ANOTHER user's (public) friend list is a
+plausible social-network feature, so :id may be intentional here. Unlike
+/send and /receive, an accepted friend list is not inherently private.
+Confirm the product intent before changing.
+======================================================
+
+======================================================
+File:
+src/modules/profile/controller.ts
+
+Function:
+update()
+
+Route:
+PATCH /v1/profiles/:id
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { id } = req.params;
+...
+const response = await this.profileService.update(
+  new UpdateProfileInputDTO({
+    id: Number(id),
+    fullName: data.fullName,
+    ...
+  })
+);
+
+Problem:
+
+Authenticated user already exists in req.user but the profile id comes
+from the route parameter and is never checked against the caller.
+ProfileServiceImpl.update() does findById(data.id) then writes - there
+is no ownership verification anywhere in the chain. Any authenticated
+user can overwrite any other user's profile (name, phone, bio, avatar,
+cover) by changing :id.
+
+Recommendation:
+
+Resolve the profile from the authenticated account instead of trusting
+the path, e.g.
+
+const profile = await this.profileService.findByAccountId(req.user.id);
+// then update profile.id
+
+or keep :id and verify it belongs to req.user.id before writing.
+
+Call chain:
+
+Router (src/routes/v1/profile.route.ts)
+→ verifyToken()
+→ ProfileController.update()
+→ ProfileServiceImpl.update()
+→ ProfileRepoImpl.findById() / ProfileRepoImpl.update()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: :id here is the Profiles primary key, not
+Accounts.id, so it is not a literal "authenticated user id" parameter -
+it needs the extra account→profile hop. The underlying defect (caller
+identity available but ignored) is certain; only the exact fix shape
+depends on that mapping.
+======================================================
+
+======================================================
+File:
+src/modules/group/controller.ts
+
+Function:
+create()
+
+Route:
+POST /v1/groups
+
+Authentication:
+verifyToken ✅ + verifyRole([ADMIN]) (see note 3 - non-functional)
+
+Current code:
+
+const { name, type, owner, bio } = req.body;
+const dto = new CreateGroupInputDTO({
+  name: name,
+  type: ...,
+  owner: owner,
+  ...
+});
+
+Problem:
+
+Authenticated user already exists in req.user but `owner` - the account
+that will own the newly created group - is still requested from the
+request body. The creator of a group is normally its owner. Because
+verifyRole() never actually rejects anyone, any authenticated user can
+create a group owned by an arbitrary account.
+
+Recommendation:
+
+Use:
+
+const owner = req.user.id;
+
+instead of accepting `owner` from request body.
+
+Call chain:
+
+Router (src/routes/v1/group.route.ts)
+→ verifyToken() → verifyRole([ADMIN])
+→ GroupController.create()
+→ GroupServiceImpl.createGroup()
+→ AccountRepoImpl.findById(data.owner)
+→ GroupRepoImpl.create()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: the route is nominally gated to ADMIN, which could
+represent an intentional "admin creates a group on behalf of a user"
+flow (an excluded category). That exclusion does not really hold here
+because the role guard is inoperative, so the finding is kept at MEDIUM
+rather than dropped.
+======================================================
+
+======================================================
+File:
+src/modules/group/controller.ts
+
+Function:
+addMember()
+
+Route:
+POST /v1/groups/invites
+
+Authentication:
+verifyToken ✅ + verifyRole([ADMIN]) (see note 3 - non-functional)
+
+Current code:
+
+const { groupId, owner, invitee } = req.body;
+const dto = new AddMemberInputDTO({
+  groupId: groupId,
+  owner: owner,
+  invitee: invitee
+});
+
+Problem:
+
+Authenticated user already exists in req.user but `owner` is still
+requested from the request body. `owner` is the authorization subject -
+GroupServiceImpl.addMember() line 64 does:
+
+    if (!(await this.groupRepo.isOwned(data.groupId, data.owner)))
+
+Since the client supplies the value being checked, the check only
+proves "some owner exists", not "the caller is the owner". Any
+authenticated user can add members to any group by passing that group's
+real owner id. (invitee legitimately comes from the client.)
+
+Recommendation:
+
+Use:
+
+const owner = req.user.id;
+
+instead of accepting `owner` from request body.
+
+Call chain:
+
+Router (src/routes/v1/group.route.ts)
+→ verifyToken() → verifyRole([ADMIN])
+→ GroupController.addMember()
+→ GroupServiceImpl.addMember()
+→ GroupRepoImpl.isOwned(groupId, owner)
+→ AccountRepoImpl.findById(invitee) / GroupRepoImpl.findById() / update()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: nominal ADMIN gate (see note 3). The ownership-check
+bypass itself is unambiguous.
+======================================================
+
+======================================================
+File:
+src/modules/group/controller.ts
+
+Function:
+deleteGroup()
+
+Route:
+DELETE /v1/groups
+
+Authentication:
+verifyToken ✅ + verifyRole([ADMIN]) (see note 3 - non-functional)
+
+Current code:
+
+const { owner, groupId } = req.body;
+const response = await this.service.deleteGroup(
+  new DeleteGroupInputDTO({
+    groupId: groupId,
+    owner: owner
+  })
+);
+
+Problem:
+
+Authenticated user already exists in req.user but `owner` is still
+requested from the request body, and it is again the value fed to the
+ownership guard:
+
+    if (!(await this.groupRepo.isOwned(data.groupId, data.owner)))   // line 152
+
+Any authenticated user who knows a group's real owner id can delete
+that group.
+
+Recommendation:
+
+Use:
+
+const owner = req.user.id;
+
+instead of accepting `owner` from request body.
+
+Call chain:
+
+Router (src/routes/v1/group.route.ts)
+→ verifyToken() → verifyRole([ADMIN])
+→ GroupController.deleteGroup()
+→ GroupServiceImpl.deleteGroup()
+→ GroupRepoImpl.isOwned() → GroupRepoImpl.delete()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: nominal ADMIN gate (see note 3).
+======================================================
+
+======================================================
+File:
+src/modules/group/controller.ts
+
+Function:
+removeMember()
+
+Route:
+DELETE /v1/groups/members
+
+Authentication:
+verifyToken ✅ + verifyRole([ADMIN]) (see note 3 - non-functional)
+
+Current code:
+
+const { groupId, owner, member } = req.body;
+const response = await this.service.removeMember(
+  new RemoveMemberInputDTO({
+    groupId: groupId,
+    owner: owner,
+    member: member
+  })
+);
+
+Problem:
+
+Authenticated user already exists in req.user but `owner` is still
+requested from the request body and is the sole basis of the
+authorization check (GroupServiceImpl.removeMember() line 169,
+groupRepo.isOwned(data.groupId, data.owner)). (member legitimately
+comes from the client.)
+
+Recommendation:
+
+Use:
+
+const owner = req.user.id;
+
+instead of accepting `owner` from request body.
+
+Call chain:
+
+Router (src/routes/v1/group.route.ts)
+→ verifyToken() → verifyRole([ADMIN])
+→ GroupController.removeMember()
+→ GroupServiceImpl.removeMember()
+→ GroupRepoImpl.isOwned()
+→ AccountRepoImpl.findById(member) / GroupRepoImpl.findById() / update()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: nominal ADMIN gate (see note 3).
+======================================================
+
+======================================================
+File:
+src/modules/group/controller.ts
+
+Function:
+modifyGroup()
+
+Route:
+PUT /v1/groups/:id
+
+Authentication:
+verifyToken ✅ + verifyRole([ADMIN]) (see note 3 - non-functional)
+
+Current code:
+
+const { id } = req.params;
+const { name, type, owner, bio } = req.body;
+const dto = new ModifyGroupInputDTO({
+  id: Number(id),
+  owner: owner,
+  ...
+});
+
+Problem:
+
+Authenticated user already exists in req.user but `owner` is still
+requested from the request body. Note this path is even weaker than the
+others: GroupServiceImpl.modifyGroup() (line 136) does NOT call
+isOwned() at all - it loads the group by id and updates it - so the
+client-supplied `owner` is written through without any caller check.
+
+Recommendation:
+
+Use:
+
+const owner = req.user.id;
+
+instead of accepting `owner` from request body, and add an isOwned()
+check consistent with the other group mutations.
+
+Call chain:
+
+Router (src/routes/v1/group.route.ts)
+→ verifyToken() → verifyRole([ADMIN])
+→ GroupController.modifyGroup()
+→ GroupServiceImpl.modifyGroup()
+→ GroupRepoImpl.findById() → GroupRepoImpl.update()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: nominal ADMIN gate (see note 3).
+======================================================
+
+======================================================
+File:
+src/modules/advertisement/controller.ts
+
+Function:
+create()
+
+Route:
+POST /v1/advertisements
+
+Authentication:
+verifyToken ✅ + verifyRole([ADMIN, ADS]) (see note 3 - non-functional)
+
+Current code:
+
+const { accountId, title, description, linkRef } = req.body;
+const dto = new CreateAdvertsementInputDTO({
+  accountId: accountId,
+  ...
+});
+
+Problem:
+
+Authenticated user already exists in req.user but accountId - the
+advertiser who will own the ad - is still requested from the request
+body. For the ADS role (an advertiser managing their own campaigns) the
+owner is the caller.
+
+Recommendation:
+
+Use:
+
+const accountId = req.user.id;
+
+instead of accepting accountId from request body.
+
+Call chain:
+
+Router (src/routes/v1/advertisement.route.ts)
+→ verifyToken() → verifyRole([ADMIN, ADS]) → validate() → upload
+→ AdvertisementController.create()
+→ AdvertisementServiceImpl.create()
+→ AccountRepoImpl.findById(data.accountId)
+→ AdvertisementRepositoriesImpl.create()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: the route mixes two audiences - ADMIN (who may
+legitimately create an ad for another account, an excluded category)
+and ADS (who should not). The role guard cannot currently distinguish
+them, so the correct fix depends on whether admin-on-behalf-of is a
+real requirement.
+======================================================
+
+======================================================
+File:
+src/modules/advertisement/controller.ts
+
+Function:
+update()
+
+Route:
+PUT /v1/advertisements/:adsId
+
+Authentication:
+verifyToken ✅ + verifyRole([ADMIN, ADS]) (see note 3 - non-functional)
+
+Current code:
+
+const { accountId, title, linkRef, description } = req.body;
+const { adsId } = req.params;
+const dto = new UpdateAdvertsementInputDTO({
+  adsId: Number(adsId),
+  accountId: accountId,
+  ...
+});
+
+Problem:
+
+Authenticated user already exists in req.user but accountId is still
+requested from the request body. AdvertisementServiceImpl.update() only
+checks that the account exists (findById at line 109); it never
+verifies that the ad belongs to the caller, so the client-supplied
+accountId can be used to re-assign or edit another advertiser's ad.
+
+Recommendation:
+
+Use:
+
+const accountId = req.user.id;
+
+instead of accepting accountId from request body, and verify
+ads.account.id === req.user.id before updating.
+
+Call chain:
+
+Router (src/routes/v1/advertisement.route.ts)
+→ verifyToken() → verifyRole([ADMIN, ADS]) → upload
+→ AdvertisementController.update()
+→ AdvertisementServiceImpl.update()
+→ AdvertisementRepositoriesImpl.findById() / AccountRepoImpl.findById()
+→ AdvertisementRepositoriesImpl.update()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: same ADMIN/ADS ambiguity as create().
+======================================================
+
+======================================================
+File:
+src/modules/report/controller.ts
+
+Function:
+getList()
+
+Route:
+GET /v1/reports?accountId=<n>&targetId=<n>&type=<t>
+
+Authentication:
+verifyToken ✅  (NO role guard on this route)
+
+Current code:
+
+const query = req.query as any;
+const filters = {
+  type: query.type,
+  accountId: query.accountId ? Number(query.accountId) : undefined,
+  targetId: query.targetId ? Number(query.targetId) : undefined
+};
+
+Problem:
+
+Authenticated user already exists in req.user but the reporter id comes
+from the query string, and it is only an optional filter - omitting it
+returns EVERY report in the system. Unlike PUT /v1/reports/:targetId,
+this route carries no verifyRole, so any authenticated user can list all
+reports or filter by an arbitrary accountId.
+
+Recommendation:
+
+If this is the end-user "my reports" list, use:
+
+const accountId = req.user.id;
+
+instead of accepting accountId from the query string. If it is meant to
+be an admin listing, it needs a working role guard instead.
+
+Call chain:
+
+Router (src/routes/v1/report.route.ts)
+→ verifyToken()
+→ ReportController.getList()
+→ ReportServiceImpl.getList()
+→ ReportRepoImpl.find()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: intent is ambiguous - the sibling PUT route is
+admin-gated, which hints this listing may also be meant for admins (an
+excluded category). As currently routed it is a plain authenticated
+endpoint, so it is reported.
+======================================================
+
+======================================================
+File:
+src/modules/account/controller.ts
+
+Function:
+delete()
+
+Route:
+DELETE /v1/accounts/:id
+
+Authentication:
+verifyToken ✅  (NO role guard on this route)
+
+Current code:
+
+const response = await this.service.delete(Number(req.params.id));
+
+Problem:
+
+Authenticated user already exists in req.user but the target account id
+comes from the route parameter with no comparison to the caller and no
+role guard. AccountServiceImpl.delete() loads the account by id and
+deletes it. Any authenticated user can delete any account.
+
+Recommendation:
+
+If this is self-service account deletion, use:
+
+const id = req.user.id;
+
+instead of accepting the id from the route parameter. If it is an admin
+operation, it needs a working role guard.
+
+Call chain:
+
+Router (src/routes/v1/account.route.ts)
+→ verifyToken()
+→ AccountController.delete()
+→ AccountServiceImpl.delete()
+→ AccountRepoImpl.findById() → AccountRepoImpl.delete()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: this could be intended as an admin action (excluded
+category) - the neighbouring ban/unban routes clearly are - but unlike
+them it has no verifyRole at all, and "delete my account" is the more
+common reading of DELETE on the accounts resource.
+======================================================
+
+
+##############################################################
+#  RELATED FINDINGS - req.user AVAILABLE BUT IGNORED         #
+#  (no client-supplied user id, so a slightly different      #
+#   shape from the pattern above - listed for completeness)  #
+##############################################################
+
+======================================================
+File:
+src/modules/post/controller.ts
+
+Function:
+delete()
+
+Route:
+DELETE /v1/posts/:id
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const response = await this.postService.delete(Number(req.params.id));
+
+Problem:
+
+Authenticated user already exists in req.user but is never consulted.
+No accountId is requested from the client either - the post is simply
+deleted by id. PostServiceImpl.delete() (line 351) forwards straight to
+postRepo.delete(id) with no ownership check, so any authenticated user
+can delete any post. Contrast update() in the same controller, which at
+least attempts an ownership comparison.
+
+Recommendation:
+
+Use:
+
+const owner = req.user.id;
+
+and verify post.accounts.id === owner before deleting.
+
+Call chain:
+
+Router (src/routes/v1/post.route.ts)
+→ verifyToken()
+→ PostController.delete()
+→ PostServiceImpl.delete()
+→ PostRepoImpl.delete()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: the endpoint does not ask the client for a user id,
+so it is not literally the "id supplied by client" pattern; it is the
+adjacent defect of ignoring an available req.user. The missing
+authorization is certain.
+======================================================
+
+======================================================
+File:
+src/modules/message/controller.ts
+
+Function:
+updateStatus()
+
+Route:
+PATCH /v1/messages/status/:id
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { id } = req.params;
+const { status } = req.body;
+const inputDTO = new ChangeStatusMessageInputDTO(
+  Number(id),
+  status as MESSAGESTATUS
+);
+
+Problem:
+
+Authenticated user already exists in req.user but is never used. :id is
+a message id; MessageServiceImpl.changeStatus() loads it and writes the
+new status without checking that the caller is the message's sender or
+receiver, so any authenticated user can flip the read/delivered status
+of any message in the system.
+
+Recommendation:
+
+Compare the loaded message's participants against req.user.id before
+changing status, e.g. require
+message.receiver.id === req.user.id.
+
+Call chain:
+
+Router (src/routes/v1/message.route.ts)
+→ verifyToken()
+→ MessageController.updateStatus()
+→ MessageServiceImpl.changeStatus()
+→ MessageRepoImpl.findById() → MessageRepoImpl.changeStatus()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: no client-supplied user identifier is involved; the
+issue is the unused authenticated identity.
+======================================================
+
+======================================================
+File:
+src/modules/notification/controller.ts
+
+Function:
+update()
+
+Route:
+PUT /v1/notifications/:id
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { id } = req.params;
+const { status } = req.body;
+const response = await this.notificationService.updateStatus(
+  new UpdateNotificationInputDTO({
+    notificationId: Number(id),
+    status: status
+  })
+);
+
+Problem:
+
+Authenticated user already exists in req.user but is never used. :id is
+a notification id; NotificationServiceImpl.updateStatus() loads and
+saves it without verifying that the caller is its receptor, so any
+authenticated user can mark another user's notifications as read.
+
+Recommendation:
+
+Verify notification.receptor.id === req.user.id before updating.
+
+Call chain:
+
+Router (src/routes/v1/notification.route.ts)
+→ verifyToken()
+→ NotificationController.update()
+→ NotificationServiceImpl.updateStatus()
+→ NotificationsRepoImpl.findById() → NotificationsRepoImpl.create()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: no client-supplied user identifier is involved; the
+issue is the unused authenticated identity.
+======================================================
+
+======================================================
+File:
+src/modules/message/controller.ts
+
+Function:
+getDetail()
+
+Route:
+GET /v1/messages/:id
+
+Authentication:
+verifyToken ✅
+
+Current code:
+
+const { id } = req.params;
+const response = await this.service.getDetail(Number(id));
+
+Problem:
+
+Authenticated user already exists in req.user but is never used. A
+single private message is returned by its primary key with no check
+that the caller is the sender or receiver
+(MessageServiceImpl.getDetail() → messageRepo.findById()).
+
+Recommendation:
+
+After loading the message, verify that req.user.id matches the sender
+or the receiver before returning it.
+
+Call chain:
+
+Router (src/routes/v1/message.route.ts)
+→ verifyToken()
+→ MessageController.getDetail()
+→ MessageServiceImpl.getDetail()
+→ MessageRepoImpl.findById()
+
+Confidence:
+MEDIUM
+Reason for MEDIUM: no client-supplied user identifier is involved; the
+issue is the unused authenticated identity.
+======================================================
+
+
+##############################################################
+#  CHECKED AND CLEAN                                         #
+##############################################################
+
+POST /v1/posts            PostController.create()
+                          -> accountId: req.user.id   ✅ CORRECT
+
+POST /v1/messages         MessageController.createMessage()
+                          -> senderId: req.user.id    ✅ CORRECT
+
+GET  /v1/roles            RoleController.getList()
+                          -> no user identity involved ✅
+
+Socket.IO (src/middlewares/socketio.ts)
+                          -> socket.data.userId derived from verified
+                             token; rooms keyed as `user_${userId}` ✅
+
+
+##############################################################
+#  EXCLUDED FROM THIS REPORT (per audit rules)               #
+##############################################################
+
+PUBLIC / UNAUTHENTICATED (no verifyToken on the route):
+  POST /v1/auth/login, /v1/auth/signup, /v1/auth/reset, /v1/auth/verify
+  POST /v1/emails, POST /v1/emails/verify
+  GET  /v1/accounts, GET /v1/accounts/:id
+  GET  /v1/posts, /v1/posts/:id, /v1/posts/suggest, /v1/posts/accounts/:id
+  GET  /v1/groups/:id, /suggest, /owned/:id, /joined/:id
+  GET  /v1/comments/:postId
+  GET  /v1/advertisements, /v1/advertisements/:id
+  GET  /v1/profiles, /v1/profiles/:id, /v1/profiles/accounts/:id
+  POST /v1/profiles, POST /v1/profiles/:id (setToAccount)
+
+  NOTE (out of scope but worth flagging separately): POST /v1/profiles/:id
+  (ProfileController.setToAccount) accepts accountId from the body and has
+  NO verifyToken at all, so it can bind any profile to any account
+  anonymously. Not reported as a req.user finding because the route is
+  unauthenticated - there is no req.user to use.
+
+ADMIN-INTENT (admin deliberately supplies another user's id):
+  POST /v1/accounts/ban/:id      AccountController.banId()
+  POST /v1/accounts/unban/:id    AccountController.unbanId()
+  PUT  /v1/accounts              AccountController.setRolesToAccount()
+  PUT  /v1/reports/:targetId     ReportController.update()
+
+INTERNAL / BOOTSTRAP (not request-scoped):
+  src/modules/admin/init.admin.ts, src/modules/admin/account.controller.ts
+  src/modules/role/init.role.ts
+
+No cron jobs or scheduled/background jobs exist in this codebase.
+
+
+##############################################################
+#  SUMMARY                                                   #
+##############################################################
+
+Controllers inspected:
+14
+  (account, admin, advertisement, auth, comment, email, friendShip,
+   group, message, notification, post, profile, report, role)
+
+Protected endpoints:
+40
+  account 5, advertisement 3, comment 2, friendShip 7, group 5,
+  message 4, notification 4, post 5, profile 1, report 3, role 1
+
+Potential issues:
+30
+  26 = authenticated identity supplied by the client (the target pattern)
+   4 = req.user available but ignored entirely (related findings section)
+
+High confidence:
+15
+
+Medium confidence:
+15
+
+Modules with at least one finding:
+10 of 14
+  post, comment, friendShip, message, notification, report, account,
+  profile, group, advertisement
+
+Most common shapes:
+  - `owner` / `accountId` read from req.body on a mutation .... 13
+  - self-scoped `:id` read from req.params on a read ..........  7
+  - identity ignored entirely, no ownership check .............  4
+  - identifier read from req.query ............................  2
+
+Cross-cutting note:
+  In 6 cases (post update, comment delete, group addMember /
+  deleteGroup / removeMember, advertisement update) the client-supplied
+  identifier is the exact value the service compares against when
+  deciding authorization. Binding those to req.user.id closes the check,
+  not merely the input.
+
+##############################################################
+#  END OF REPORT - no source files were modified             #
+##############################################################
