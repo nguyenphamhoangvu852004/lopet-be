@@ -14,11 +14,10 @@ export class MessageController {
     this.service = service;
   }
   async getListMessage(req: Request, res: Response) {
-    const { id } = req.params;
     const { targetId } = req.query;
-    console.log(id, targetId);
+    console.log(req.user.id, targetId);
     const inputDTO = new GetListMessageInputDTO({
-      senderId: Number(id),
+      senderId: Number(req.user.id),
       receiverId: Number(targetId),
     });
     const response = await this.service.getListMessage(inputDTO);

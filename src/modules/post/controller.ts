@@ -71,7 +71,7 @@ export class PostController {
 
     const dto = new UpdatePostInputDTO({
       postId: Number(postId),
-      owner: Number(data.owner),
+      owner: req.user.id,
       oldIdsMedia,
       content: data.content,
       postMedias: uploadedMedias,
@@ -247,9 +247,9 @@ export class PostController {
     );
   }
   async like(req: Request, res: Response) {
-    const { postId, accountId } = req.body;
+    const { postId } = req.body;
     const dto = new LikePostInputDTO({
-      accountId: accountId,
+      accountId: req.user.id,
       postId: postId,
     });
     const response = await this.postService.like(dto);
@@ -264,9 +264,9 @@ export class PostController {
   }
 
   async unlike(req: Request, res: Response) {
-    const { postId, accountId } = req.body;
+    const { postId } = req.body;
     const dto = new UnlikePostInputDTO({
-      accountId: accountId,
+      accountId: req.user.id,
       postId: postId,
     });
     const response = await this.postService.unLike(dto);

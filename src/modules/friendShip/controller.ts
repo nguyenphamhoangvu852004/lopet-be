@@ -12,8 +12,9 @@ export class FriendShipController {
     this.service = service
   }
   async getListReceiveFriendShips(req: Request, res: Response) {
-    const { id } = req.params
-    const response = await this.service.getListReceiveFriendShips(Number(id))
+    const response = await this.service.getListReceiveFriendShips(
+      Number(req.user.id)
+    )
     sendResponse(
       new ApiResponse({
         data: response,
@@ -24,8 +25,9 @@ export class FriendShipController {
     )
   }
   async getListSendFriendShips(req: Request, res: Response) {
-    const { id } = req.params
-    const response = await this.service.getListSendFriendShips(Number(id))
+    const response = await this.service.getListSendFriendShips(
+      Number(req.user.id)
+    )
     sendResponse(
       new ApiResponse({
         data: response,
@@ -50,14 +52,15 @@ export class FriendShipController {
   }
   /**
    * @body
-   *    - `senderId` (number): Id người gữi lời mời kết bạn
    *    - `receiverId` (number): Id người nhận lời mời kết bạn
+   *
+   * Id người gữi lời mời kết bạn được lấy từ token (req.user.id)
    *   */
   async create(req: Request, res: Response) {
-    const { senderId, receiverId } = req.body
+    const { receiverId } = req.body
 
     const dto = new CreateFriendShipInputDTO({
-      senderId: senderId,
+      senderId: req.user.id,
       receiverId: receiverId
     })
 
@@ -75,12 +78,13 @@ export class FriendShipController {
   /**
    * @body
    *    - `senderId` (number): Id người gữi lời mời kết bạn
-   *    - `receiverId` (number): Id người nhận lời mời kết bạn
+   *
+   * Id người nhận lời mời kết bạn được lấy từ token (req.user.id)
    *   */
   async accept(req: Request, res: Response) {
-    const { senderId, receiverId } = req.body
+    const { senderId } = req.body
     const dto = new ChangeStatusFriendShipInputDTO({
-      receiverId: receiverId,
+      receiverId: req.user.id,
       senderId: senderId,
       status: FRIENDSHIPSTATUS.ACCEPTED
     })
@@ -98,12 +102,13 @@ export class FriendShipController {
   /**
    * @body
    *    - `senderId` (number): Id người gữi lời mời kết bạn
-   *    - `receiverId` (number): Id người nhận lời mời kết bạn
+   *
+   * Id người nhận lời mời kết bạn được lấy từ token (req.user.id)
    *   */
   async reject(req: Request, res: Response) {
-    const { senderId, receiverId } = req.body
+    const { senderId } = req.body
     const dto = new ChangeStatusFriendShipInputDTO({
-      receiverId: receiverId,
+      receiverId: req.user.id,
       senderId: senderId,
       status: FRIENDSHIPSTATUS.REJECTED
     })

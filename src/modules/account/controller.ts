@@ -81,9 +81,8 @@ export class AccountController {
     )
   }
   async getSuggest(req: Request, res: Response) {
-    const { id } = req.params
     const limit = Number(req.query.limit)
-    const response = await this.service.getSuggest(Number(id), limit)
+    const response = await this.service.getSuggest(Number(req.user.id), limit)
     sendResponse(
       new ApiResponse({
         data: response,

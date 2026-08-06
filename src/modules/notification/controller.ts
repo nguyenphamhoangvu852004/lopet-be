@@ -24,9 +24,9 @@ export class NotificationController {
     return
   }
   async create(req: Request, res: Response) {
-    const { actorId, receptorId, content, objectType } = req.body
+    const { receptorId, content, objectType } = req.body
     const dto = new CreateNotificationInputDTO({
-      actorId: Number(actorId),
+      actorId: Number(req.user.id),
       receptorId: Number(receptorId),
       content: content,
       objectType: objectType
@@ -54,8 +54,9 @@ export class NotificationController {
   }
 
   async getList(req: Request, res: Response) {
-    const { id } = req.params
-    const notifications = await this.notificationService.getList(Number(id))
+    const notifications = await this.notificationService.getList(
+      Number(req.user.id)
+    )
     sendResponse(
       new ApiResponse({
         data: notifications,

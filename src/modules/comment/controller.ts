@@ -12,10 +12,9 @@ export class CommentController {
   }
   async delete(req: Request, res: Response) {
     const { commentId } = req.params
-    const { owner } = req.body
     const dto = new DeleteCommentInputDTO({
       commentId: Number(commentId),
-      owner: owner
+      owner: req.user.id
     })
     const response = await this.commentService.delete(dto)
     sendResponse(
@@ -28,7 +27,7 @@ export class CommentController {
     )
   }
   async create(req: Request, res: Response) {
-    const { accountId, content, replyCommentId, postId } = req.body
+    const { content, replyCommentId, postId } = req.body
     console.log(req.body)
     let imageUrl = ''
     if (req.file) {
@@ -38,7 +37,7 @@ export class CommentController {
       imageUrl = rs.secure_url ?? ''
     }
     const dto = new CreateCommentInputDTO({
-      accountId: accountId,
+      accountId: req.user.id,
       content: content,
       imageUrl: imageUrl,
       // eslint-disable-next-line no-constant-binary-expression

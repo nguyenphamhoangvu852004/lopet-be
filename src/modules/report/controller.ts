@@ -12,9 +12,9 @@ export class ReportController {
     this.reportSerice = reportSerice
   }
   async create(req: Request, res: Response) {
-    const { accountId, targetId, type, reason } = req.body
+    const { targetId, type, reason } = req.body
     const dto = new CreateReportInputDTO({
-      accountId: accountId,
+      accountId: req.user.id,
       targetId: targetId,
       type: type,
       reason: reason
