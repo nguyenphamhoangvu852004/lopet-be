@@ -30,18 +30,18 @@ export class ReportController {
     )
   }
   async getList(req: Request, res: Response) {
-    const query = req.query as any
-    const filters = {
-      type: query.type,
-      // action: query.action,
-      accountId: query.accountId ? Number(query.accountId) : undefined,
-      targetId: query.targetId ? Number(query.targetId) : undefined
+    // Không ép `as any`: query string luôn là string | undefined, khai đúng kiểu
+    // để chỗ này không âm thầm nhận nhầm mảng hay object lồng nhau từ client
+    const { type, accountId, targetId } = req.query as {
+      type?: string
+      accountId?: string
+      targetId?: string
     }
 
     const dto = new GetListReportInputDTO({
-      accountId: filters.accountId,
-      type: filters.type,
-      targetId: filters.targetId
+      accountId: accountId ? Number(accountId) : undefined,
+      type: type,
+      targetId: targetId ? Number(targetId) : undefined
     })
 
     const response = await this.reportSerice.getList(dto)

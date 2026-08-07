@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { log } from 'console'
-import { ILike, Repository } from 'typeorm'
+import { FindOptionsWhere, ILike, Repository } from 'typeorm'
 import { mySqlDataSource } from '~/config/appDataSource'
 import { Posts } from '~/entities/posts.entity'
 import { GetPostListInputDTO } from '~/modules/post/dto/Get'
@@ -41,14 +40,16 @@ export default class PostRepoImpl implements IPostRepo {
   }
   async getAll(data: GetPostListInputDTO): Promise<Posts[]> {
     const { content, groupId } = data
-    const whereClause: any = {}
+    // FindOptionsWhere thay cho `any`: chính kiểu `any` ở chỗ tương tự trong
+    // ReportRepoImpl đã che mất lỗi đổi tên cột, typecheck không báo mà chỉ vỡ
+    // lúc chạy thật.
+    const whereClause: FindOptionsWhere<Posts> = {}
     if (content) {
       whereClause.content = ILike(`%${content}%`)
     }
     if (groupId) {
       whereClause.group = { id: groupId }
     }
-    console.log(whereClause)
     const list: Posts[] = await this.postRepo.find({
       where: whereClause,
       relations: {

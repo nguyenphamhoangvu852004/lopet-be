@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { ILike, Repository } from 'typeorm'
+import { FindOptionsWhere, ILike, Repository } from 'typeorm'
 import { mySqlDataSource } from '~/config/appDataSource'
 import { logger } from '~/config/logger'
 import { Accounts } from '~/entities/accounts.entity'
@@ -20,7 +19,7 @@ export default class ProfileRepoImpl implements IProfileRepo {
   }
   async findAll(data: GetListInputDTO): Promise<Profiles[]> {
     const { id, fullName } = data
-    const whereClause: any = {}
+    const whereClause: FindOptionsWhere<Profiles> = {}
 
     if (id) {
       whereClause.id = id

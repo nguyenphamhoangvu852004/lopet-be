@@ -5,8 +5,13 @@ import { Forbidden, NotFound } from '~/error/error.custom'
 export interface OwnershipOptions<T> {
   /** Nạp tài nguyên từ request (thường theo req.params.id) */
   load: (req: Request) => Promise<T | null>
-  /** Rút ra id tài khoản sở hữu tài nguyên đó */
-  ownerOf: (resource: T) => number | null | undefined
+  /**
+   * Rút ra id tài khoản được phép đụng vào tài nguyên.
+   *
+   * Trả về mảng khi tài nguyên có nhiều bên hợp lệ — ví dụ tin nhắn thuộc về
+   * cả người gửi lẫn người nhận, không có "một chủ sở hữu" duy nhất.
+   */
+  ownerOf: (resource: T) => number | number[] | null | undefined
   /** Role được bỏ qua kiểm tra sở hữu — mặc định chỉ ADMIN */
   bypassRoles?: string[]
   /** Gắn tài nguyên đã nạp vào res.locals để handler dùng lại, khỏi query 2 lần */
@@ -44,8 +49,12 @@ export function requireOwnership<T>(options: OwnershipOptions<T>) {
         throw new NotFound('Không tìm thấy tài nguyên')
       }
 
-      const ownerId = options.ownerOf(resource)
-      if (ownerId == null || Number(ownerId) !== Number(req.user.id)) {
+      const owners = options.ownerOf(resource)
+      const allowedIds = (Array.isArray(owners) ? owners : [owners])
+        .filter((id) => id != null)
+        .map((id) => Number(id))
+
+      if (!allowedIds.includes(Number(req.user.id))) {
         throw new Forbidden('Bạn không sở hữu tài nguyên này')
       }
 

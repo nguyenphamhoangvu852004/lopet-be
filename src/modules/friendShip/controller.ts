@@ -122,12 +122,20 @@ export class FriendShipController {
       })
     )
   }
+  /**
+   * Huỷ kết bạn. Trước đây nhận CẢ senderId lẫn receiverId từ body và không
+   * đối chiếu người gọi, nên bất kỳ ai đăng nhập cũng huỷ được quan hệ bạn bè
+   * giữa hai người xa lạ. Giờ một đầu luôn là chính người gọi.
+   *
+   * Service đã dò quan hệ theo cả hai chiều nên không cần biết ai là người
+   * gửi lời mời ban đầu.
+   */
   async delete(req: Request, res: Response) {
-    const { senderId, receiverId } = req.body
+    const { friendId } = req.body
     const response = await this.service.delete(
       new DeleteFriendShipInputDTO({
-        receiverId: receiverId,
-        senderId: senderId
+        senderId: Number(req.user.id),
+        receiverId: Number(friendId)
       })
     )
     sendResponse(
