@@ -38,7 +38,6 @@ export class FriendShipServiceImpl implements IFriendShipService {
       const receiverDTO = new Receiver({
         id: receiver.id,
         username: receiver.username,
-        email: receiver.email,
         imageUrl: receiver.profile?.avatarUrl ?? '',
         status: FRIENDSHIPSTATUS.PENDING
       })
@@ -49,7 +48,6 @@ export class FriendShipServiceImpl implements IFriendShipService {
       me: new Receiver({
         id: account.id,
         username: account.username,
-        email: account.email,
         imageUrl: account.profile?.avatarUrl ?? ''
       }),
       others: listReceiver
@@ -69,7 +67,6 @@ export class FriendShipServiceImpl implements IFriendShipService {
       const receiverDTO = new Receiver({
         id: receiver.id,
         username: receiver.username,
-        email: receiver.email,
         imageUrl: receiver.profile?.avatarUrl ?? '',
         status: FRIENDSHIPSTATUS.ACCEPTED
       })
@@ -79,7 +76,6 @@ export class FriendShipServiceImpl implements IFriendShipService {
       me: new Receiver({
         id: account.id,
         username: account.username,
-        email: account.email,
         imageUrl: account.profile?.avatarUrl ?? ''
       }),
       others: listReceiver
@@ -97,7 +93,6 @@ export class FriendShipServiceImpl implements IFriendShipService {
       const receiverDTO = new Receiver({
         id: receiver.id,
         username: receiver.username,
-        email: receiver.email,
         imageUrl: receiver.profile?.avatarUrl ?? '',
         status: item.status
       })
@@ -108,7 +103,6 @@ export class FriendShipServiceImpl implements IFriendShipService {
       me: new Receiver({
         id: account.id,
         username: account.username,
-        email: account.email,
         imageUrl: account.profile?.avatarUrl ?? ''
       }),
       others: listReceiver

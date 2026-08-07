@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { requireFriendOrSelf } from '~/middlewares/requireFriendOrSelf'
 import { verifyToken } from '~/middlewares/verifyToken'
 import AccountRepoImpl from '~/modules/account/repositories/AccountRepoImpl'
 import { FriendShipController } from '~/modules/friendShip/controller'
@@ -12,24 +13,33 @@ const accountRepo = new AccountRepoImpl()
 const service = new FriendShipServiceImpl(friendShipRepo, accountRepo)
 const controller = new FriendShipController(service)
 
-// danh sách những người mà accountId đã trở thành bạn bè với người ta (ACCEPTED)
+/**
+ * Danh sách bạn bè (ACCEPTED) của một tài khoản.
+ *
+ * Trước đây chỉ cần đăng nhập là xem được danh sách bạn bè của bất kỳ ai.
+ * Giờ giới hạn ở chính chủ và bạn bè của họ.
+ */
 friendShipRouter.get(
   '/:id',
-  verifyToken(),
+  asyncHandler(verifyToken()),
+  requireFriendOrSelf(friendShipRepo),
   asyncHandler(controller.getListFriendShipsOfAccount.bind(controller))
 )
 
-// Lấy danh sách những người mà accountId này đã gữi lời mời kết bạn (PENDING)
+/**
+ * Hai route dưới đây có `:id` trên đường dẫn nhưng controller bỏ qua nó và
+ * dùng req.user.id — nghĩa là chúng luôn trả về dữ liệu của chính người gọi.
+ * Giữ nguyên hành vi đó, không cần kiểm thêm.
+ */
 friendShipRouter.get(
   '/send/:id',
-  verifyToken(),
+  asyncHandler(verifyToken()),
   asyncHandler(controller.getListSendFriendShips.bind(controller))
 )
 
-// Lấy danh sách những người gữi lời mời kết bạn đến AccountID này
 friendShipRouter.get(
   '/receive/:id',
-  verifyToken(),
+  asyncHandler(verifyToken()),
   asyncHandler(controller.getListReceiveFriendShips.bind(controller))
 )
 friendShipRouter.post(

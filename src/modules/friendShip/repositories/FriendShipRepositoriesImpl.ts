@@ -4,16 +4,40 @@ import { Accounts } from '~/entities/accounts.entity'
 import { FriendShips, FRIENDSHIPSTATUS } from '~/entities/friendShips.entity'
 import IFriendShipRepositories from '~/modules/friendShip/repositories/IFriendShipRepositories'
 
-export default class FriendShipRepositoriesImpl implements IFriendShipRepositories {
+export default class FriendShipRepositoriesImpl
+  implements IFriendShipRepositories
+{
   private friendShipRepo: Repository<FriendShips>
   constructor() {
     this.friendShipRepo = mySqlDataSource.getRepository(FriendShips)
   }
-  async findBySenderAndReceiver(senderId: number, receiverId: number): Promise<FriendShips | null> {
+  async findBySenderAndReceiver(
+    senderId: number,
+    receiverId: number
+  ): Promise<FriendShips | null> {
     const response = await this.friendShipRepo.findOne({
       where: { sender: { id: senderId }, receiver: { id: receiverId } }
     })
     return response
+  }
+
+  async areFriends(accountIdA: number, accountIdB: number): Promise<boolean> {
+    if (accountIdA === accountIdB) return true
+    const count = await this.friendShipRepo.count({
+      where: [
+        {
+          sender: { id: accountIdA },
+          receiver: { id: accountIdB },
+          status: FRIENDSHIPSTATUS.ACCEPTED
+        },
+        {
+          sender: { id: accountIdB },
+          receiver: { id: accountIdA },
+          status: FRIENDSHIPSTATUS.ACCEPTED
+        }
+      ]
+    })
+    return count > 0
   }
 
   async delete(data: FriendShips): Promise<FriendShips | null> {
@@ -28,7 +52,10 @@ export default class FriendShipRepositoriesImpl implements IFriendShipRepositori
   }
 
   async create(data: FriendShips): Promise<FriendShips | null> {
-    const isEsist = await this.findBySenderAndReceiver(data.sender.id, data.receiver.id)
+    const isEsist = await this.findBySenderAndReceiver(
+      data.sender.id,
+      data.receiver.id
+    )
     if (isEsist) return null
     const response = await this.friendShipRepo.save(data)
     if (!response) return null
@@ -51,8 +78,12 @@ export default class FriendShipRepositoriesImpl implements IFriendShipRepositori
       .createQueryBuilder('friendship')
       .leftJoinAndSelect('friendship.sender', 'sender')
       .leftJoinAndSelect('friendship.receiver', 'receiver')
-      .where('(sender.id = :accountId OR receiver.id = :accountId)', { accountId })
-      .andWhere('friendship.status = :status', { status: FRIENDSHIPSTATUS.ACCEPTED })
+      .where('(sender.id = :accountId OR receiver.id = :accountId)', {
+        accountId
+      })
+      .andWhere('friendship.status = :status', {
+        status: FRIENDSHIPSTATUS.ACCEPTED
+      })
       .getMany()
 
     // Trả về người còn lại (người bạn của userId)
@@ -66,7 +97,9 @@ export default class FriendShipRepositoriesImpl implements IFriendShipRepositori
       .createQueryBuilder('friendship')
       .leftJoinAndSelect('friendship.sender', 'sender')
       .where('friendship.receiver = :accountId', { accountId })
-      .andWhere('friendship.status = :status', { status: FRIENDSHIPSTATUS.PENDING })
+      .andWhere('friendship.status = :status', {
+        status: FRIENDSHIPSTATUS.PENDING
+      })
       .getMany()
     // Lấy người gửi (sender) ra
 
