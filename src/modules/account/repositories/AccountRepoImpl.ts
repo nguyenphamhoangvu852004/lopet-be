@@ -2,6 +2,7 @@
 import { Repository } from 'typeorm'
 import { mySqlDataSource } from '~/config/appDataSource'
 import { logger } from '~/config/logger'
+import { AccountRoles } from '~/entities/accountRoles.entity'
 import { Accounts } from '~/entities/accounts.entity'
 import { FriendShips } from '~/entities/friendShips.entity'
 import { Profiles } from '~/entities/profiles.entity'
@@ -9,16 +10,49 @@ import { ROLENAME, Roles } from '~/entities/roles.entity'
 import { NotFound } from '~/error/error.custom'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 
+/** Quan hệ chuẩn để lấy kèm role của tài khoản */
+const ROLE_RELATIONS = { accountRoles: { role: true } } as const
+
 export default class AccountRepoImpl implements IAccountRepo {
   private accountsRepo: Repository<Accounts>
   private profileRepo: Repository<Profiles>
   private friendShipRepo: Repository<FriendShips>
   private roleRepo: Repository<Roles>
+  private accountRoleRepo: Repository<AccountRoles>
   constructor() {
     this.accountsRepo = mySqlDataSource.getRepository(Accounts)
     this.profileRepo = mySqlDataSource.getRepository(Profiles)
     this.friendShipRepo = mySqlDataSource.getRepository(FriendShips)
     this.roleRepo = mySqlDataSource.getRepository(Roles)
+    this.accountRoleRepo = mySqlDataSource.getRepository(AccountRoles)
+  }
+
+  /**
+   * CHỈ dùng cho luồng đăng nhập.
+   * addSelect('account.password') là cố ý — password bị `select: false` ở entity.
+   */
+  async findByUsernameForAuth(username: string): Promise<Accounts | null> {
+    return this.accountsRepo
+      .createQueryBuilder('account')
+      .addSelect('account.password')
+      .leftJoinAndSelect('account.accountRoles', 'accountRole')
+      .leftJoinAndSelect('accountRole.role', 'role')
+      .where('account.username = :username', { username })
+      .getOne()
+  }
+
+  /**
+   * CHỈ dùng cho luồng xác thực mật khẩu bằng email (verifyAccount).
+   * Xem ghi chú ở findByUsernameForAuth.
+   */
+  async findByEmailForAuth(email: string): Promise<Accounts | null> {
+    return this.accountsRepo
+      .createQueryBuilder('account')
+      .addSelect('account.password')
+      .leftJoinAndSelect('account.accountRoles', 'accountRole')
+      .leftJoinAndSelect('accountRole.role', 'role')
+      .where('account.email = :email', { email })
+      .getOne()
   }
   async checkAccountExistByEmail(email: string): Promise<boolean> {
     const account = await this.accountsRepo.findOneBy({ email: email })
@@ -27,29 +61,48 @@ export default class AccountRepoImpl implements IAccountRepo {
     }
     return false
   }
-  async setRolesToAccount(userId: number, roles: string[]): Promise<Accounts> {
+  async setRolesToAccount(
+    userId: number,
+    roles: string[],
+    grantedBy?: number
+  ): Promise<Accounts> {
     const account = await this.accountsRepo.findOneBy({ id: userId })
     if (!account) {
-      throw new Error('Account not found')
+      throw new NotFound('Account not found')
     }
     const listRole: Roles[] = []
     for (const item of roles) {
       const role = await this.roleRepo.findOneBy({ name: item as ROLENAME })
       if (!role) {
-        throw new Error('Role not found')
+        throw new NotFound(`Role ${item} not found`)
       }
       listRole.push(role)
     }
-    account.roles = listRole
-    await this.accountsRepo.save(account)
-    return account
+
+    // account_role giờ là entity tường minh nên phải ghi qua repo riêng.
+    // Giữ nguyên ngữ nghĩa "set": thu hồi hết role cũ rồi cấp lại danh sách mới.
+    await this.accountRoleRepo.delete({ accountId: userId })
+    await this.accountRoleRepo.save(
+      listRole.map(
+        (role) =>
+          new AccountRoles({
+            accountId: userId,
+            roleId: role.id,
+            grantedBy: grantedBy ? ({ id: grantedBy } as Accounts) : null,
+            grantedAt: new Date()
+          })
+      )
+    )
+
+    const updated = await this.findById(userId)
+    return updated ?? account
   }
   async findById(id: number): Promise<Accounts | null> {
     const account = await this.accountsRepo.findOne({
       where: { id: id },
       relations: {
         profile: true,
-        roles: true
+        ...ROLE_RELATIONS
       }
     })
     if (!account) {
@@ -64,7 +117,7 @@ export default class AccountRepoImpl implements IAccountRepo {
         profile: true,
         sentFriendRequests: true,
         receivedFriendRequests: true,
-        roles: true
+        ...ROLE_RELATIONS
       }
     })
   }
@@ -88,7 +141,7 @@ export default class AccountRepoImpl implements IAccountRepo {
       },
       relations: {
         profile: true,
-        roles: true
+        ...ROLE_RELATIONS
       }
     })
     if (!account) {
@@ -104,7 +157,7 @@ export default class AccountRepoImpl implements IAccountRepo {
       },
       relations: {
         profile: true,
-        roles: true
+        ...ROLE_RELATIONS
       }
     })
     if (!account) return null
@@ -128,7 +181,7 @@ export default class AccountRepoImpl implements IAccountRepo {
       where: { id: currentAccountId },
       relations: {
         profile: true,
-        roles: true
+        ...ROLE_RELATIONS
       }
     })
 

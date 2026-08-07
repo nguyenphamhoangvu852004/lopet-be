@@ -17,7 +17,7 @@ export class GroupController {
   }
   async modifyGroup(req: Request, res: Response) {
     const { id } = req.params
-    const { name, type, owner, bio } = req.body
+    const { name, type, bio } = req.body
     const file = req.file // ✅ not req.files
     let uploadedImage
     if (file) {
@@ -28,7 +28,7 @@ export class GroupController {
       bio: bio ?? null,
       image: uploadedImage.secure_url ?? null,
       name: name,
-      owner: owner,
+      owner: Number(req.user.id),
       type: type == 'PUBLIC' ? GROUPTYPE.PUBLIC : GROUPTYPE.PRIVATE
     })
     const response = await this.service.modifyGroup(dto)
@@ -42,7 +42,7 @@ export class GroupController {
     )
   }
   async create(req: Request, res: Response) {
-    const { name, type, owner, bio } = req.body
+    const { name, type, bio } = req.body
     const file = req.file
     let uploadedImage
 
@@ -55,7 +55,7 @@ export class GroupController {
     const dto = new CreateGroupInputDTO({
       name: name,
       type: type == 'PUBLIC' ? GROUPTYPE.PUBLIC : GROUPTYPE.PRIVATE,
-      owner: owner,
+      owner: Number(req.user.id),
       bio: bio ?? null,
       coverUrl: uploadedImage?.secure_url ?? uploadedImage
     })
@@ -72,10 +72,10 @@ export class GroupController {
     return
   }
   async addMember(req: Request, res: Response) {
-    const { groupId, owner, invitee } = req.body
+    const { groupId, invitee } = req.body
     const dto = new AddMemberInputDTO({
       groupId: groupId,
-      owner: owner,
+      owner: Number(req.user.id),
       invitee: invitee
     })
 
@@ -102,11 +102,11 @@ export class GroupController {
     )
   }
   async removeMember(req: Request, res: Response) {
-    const { groupId, owner, member } = req.body
+    const { groupId, member } = req.body
     const response = await this.service.removeMember(
       new RemoveMemberInputDTO({
         groupId: groupId,
-        owner: owner,
+        owner: Number(req.user.id),
         member: member
       })
     )
@@ -120,11 +120,11 @@ export class GroupController {
     )
   }
   async deleteGroup(req: Request, res: Response) {
-    const { owner, groupId } = req.body
+    const { groupId } = req.body
     const response = await this.service.deleteGroup(
       new DeleteGroupInputDTO({
         groupId: groupId,
-        owner: owner
+        owner: Number(req.user.id)
       })
     )
     sendResponse(

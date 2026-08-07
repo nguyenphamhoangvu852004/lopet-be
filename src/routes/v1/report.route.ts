@@ -1,6 +1,5 @@
 import { Router } from 'express'
-import { ROLENAME } from '~/entities/roles.entity'
-import { verifyRole } from '~/middlewares/verifyRole'
+import { requirePermission } from '~/middlewares/requirePermission'
 import { verifyToken } from '~/middlewares/verifyToken'
 import AccountRepoImpl from '~/modules/account/repositories/AccountRepoImpl'
 import GroupRepoImpl from '~/modules/group/repositories/GroupRepoImpl'
@@ -23,20 +22,26 @@ const reportService = new ReportServiceImpl(
   postRepo
 )
 const controller = new ReportController(reportService)
-const ROLE_HAS_PERMISSION = [ROLENAME.ADMIN]
+
+// Xem danh sách báo cáo là việc của staff — trước đây chỉ cần đăng nhập
 reportRouter.get(
   '/',
   asyncHandler(verifyToken()),
+  requirePermission('report:read'),
   asyncHandler(controller.getList.bind(controller))
 )
+
+// Gửi báo cáo thuộc baseline: mọi user đã đăng nhập đều được
 reportRouter.post(
   '/',
   asyncHandler(verifyToken()),
+  requirePermission('report:create'),
   asyncHandler(controller.create.bind(controller))
 )
+
 reportRouter.put(
   '/:targetId',
   asyncHandler(verifyToken()),
-  asyncHandler(verifyRole(ROLE_HAS_PERMISSION)),
+  requirePermission('report:resolve'),
   asyncHandler(controller.update.bind(controller))
 )

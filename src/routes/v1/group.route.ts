@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import { upload } from '~/config/multerConfig'
-import { ROLENAME } from '~/entities/roles.entity'
-import { verifyRole } from '~/middlewares/verifyRole'
+import { requirePermission } from '~/middlewares/requirePermission'
 import { verifyToken } from '~/middlewares/verifyToken'
 import AccountRepoImpl from '~/modules/account/repositories/AccountRepoImpl'
 import { GroupController } from '~/modules/group/controller'
@@ -15,7 +14,16 @@ const groupRepo = new GroupRepoImpl()
 const accountRepo = new AccountRepoImpl()
 const service = new GroupServiceImpl(groupRepo, accountRepo)
 const controller = new GroupController(service)
-const ROLE_HAS_PERMISSION = [ROLENAME.ADMIN]
+
+/**
+ * Trước đây các route này đòi role ADMIN — sai nghiệp vụ: mọi user đều phải tạo
+ * được nhóm. Sở dĩ app vẫn chạy là vì verifyRole() đang là no-op.
+ *
+ * Quyền group:* nằm trong baseline nên ai đăng nhập cũng qua tầng permission.
+ * Việc "có phải chủ nhóm không" do tầng service kiểm qua group_members.role,
+ * vì ownership của group là quan hệ chứ không phải role toàn cục.
+ */
+
 groupRouter.get(
   '/suggest',
   asyncHandler(controller.getListSuggest.bind(controller))
@@ -33,34 +41,36 @@ groupRouter.get(
 groupRouter.post(
   '/',
   asyncHandler(verifyToken()),
-  verifyRole(ROLE_HAS_PERMISSION),
+  requirePermission('group:create'),
   upload.single('image'),
   asyncHandler(controller.create.bind(controller))
 )
+
 groupRouter.post(
   '/invites',
   asyncHandler(verifyToken()),
-  verifyRole(ROLE_HAS_PERMISSION),
+  requirePermission('group:update:own'),
   asyncHandler(controller.addMember.bind(controller))
 )
 
 groupRouter.delete(
   '/',
   asyncHandler(verifyToken()),
-  verifyRole(ROLE_HAS_PERMISSION),
+  requirePermission('group:delete:own', 'group:delete'),
   asyncHandler(controller.deleteGroup.bind(controller))
 )
+
 groupRouter.delete(
   '/members',
   asyncHandler(verifyToken()),
-  verifyRole(ROLE_HAS_PERMISSION),
+  requirePermission('group:update:own'),
   asyncHandler(controller.removeMember.bind(controller))
 )
 
 groupRouter.put(
   '/:id',
   asyncHandler(verifyToken()),
-  verifyRole(ROLE_HAS_PERMISSION),
+  requirePermission('group:update:own'),
   upload.single('image'),
   asyncHandler(controller.modifyGroup.bind(controller))
 )

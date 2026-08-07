@@ -68,7 +68,8 @@ export class ReportController {
     const dto = new ChangeStatusReportInputDTO({
       targetId: Number(targetId),
       type: type,
-      action: action
+      action: action,
+      resolvedBy: Number(req.user.id)
     })
     const response = await this.reportSerice.update(dto)
     sendResponse(

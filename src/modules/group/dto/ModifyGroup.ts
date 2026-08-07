@@ -5,7 +5,8 @@ export class ModifyGroupInputDTO {
   name?: string
   type?: GROUPTYPE
   bio?: string
-  owner?: number
+  /** Tài khoản đang thao tác — bắt buộc vì dùng để kiểm tra quyền quản trị group */
+  owner!: number
   image?: string
   constructor(data?: Partial<ModifyGroupInputDTO>) {
     Object.assign(this, data)

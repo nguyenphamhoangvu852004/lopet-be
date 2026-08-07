@@ -30,7 +30,8 @@ export default class AuthServiceImpl implements IAuthService {
   async login(data: LoginInputDTO): Promise<LoginOutputDTO> {
     //tìm tài khoản coi nó có tồn tại hay chưa
     // tạo payload trả về cho người ta
-    const account = await this.accountRepo.findByUsername(data.username)
+    // Dùng bản ForAuth vì password bị `select: false` ở entity
+    const account = await this.accountRepo.findByUsernameForAuth(data.username)
     // có tài khoản thì nó so sanhs passsword
     if (!account) throw new NotFound('No user found')
 
@@ -46,7 +47,9 @@ export default class AuthServiceImpl implements IAuthService {
         email: account.email,
         roles: []
       }
-      for (const role of account.roles) payload.roles.push(role.name) //account.roles
+      for (const accountRole of account.accountRoles) {
+        payload.roles.push(accountRole.role.name)
+      }
       const accessToken = generateAccessToken(payload)
       const refreshToken = generateRefreshToken(payload)
       const result = new LoginOutputDTO({
@@ -116,7 +119,8 @@ export default class AuthServiceImpl implements IAuthService {
   async verifyAccount(
     data: VerifyAccountInputDTO
   ): Promise<VerifyAccountOutputDTO> {
-    const account = await this.accountRepo.findByEmail(data.email)
+    // Dùng bản ForAuth vì cần so khớp password
+    const account = await this.accountRepo.findByEmailForAuth(data.email)
     if (!account) throw new NotFound('Không tim thấy tài khoản')
     if (!(await comparePassword(data.password, account.password)))
       throw new BadRequest('Sai mật khẩu')

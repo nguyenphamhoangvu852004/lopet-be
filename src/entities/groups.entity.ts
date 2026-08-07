@@ -1,16 +1,7 @@
 import 'reflect-metadata'
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn
-} from 'typeorm'
-import { Accounts } from '~/entities/accounts.entity'
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { BaseEntity } from '~/entities/base.entity'
+import { GroupMembers } from '~/entities/groupMembers.entity'
 import { Posts } from '~/entities/posts.entity'
 
 export enum GROUPTYPE {
@@ -22,10 +13,12 @@ export enum GROUPTYPE {
 export class Groups extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number
+
   @Column({
     type: 'varchar'
   })
   name!: string
+
   @Column({
     type: 'enum',
     enum: GROUPTYPE
@@ -44,17 +37,13 @@ export class Groups extends BaseEntity {
   })
   coverUrl!: string
 
-  @ManyToOne(() => Accounts, { onDelete: 'CASCADE', nullable: true })
-  @JoinColumn({ name: 'owner' })
-  owner!: Accounts
-
-  @ManyToMany(() => Accounts, (account) => account.memberGroups, { onDelete: 'CASCADE', nullable: true })
-  @JoinTable({
-    name: 'group_members',
-    joinColumn: { name: 'group_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'account_id', referencedColumnName: 'id' }
-  })
-  members!: Accounts[]
+  /**
+   * Cột `owner` cũ đã bị bỏ.
+   * Chủ group giờ là bản ghi group_members có role = OWNER, nhờ đó group có
+   * thể có nhiều co-admin thay vì đúng một chủ duy nhất.
+   */
+  @OneToMany(() => GroupMembers, (groupMember) => groupMember.group)
+  members!: GroupMembers[]
 
   @OneToMany(() => Posts, (post) => post.group, { nullable: true })
   posts!: Posts[]

@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Repository } from 'typeorm'
+import { FindOptionsWhere, Repository } from 'typeorm'
 import { mySqlDataSource } from '~/config/appDataSource'
-import { Reports } from '~/entities/reports.entity'
+import { REPORTTYPE, Reports } from '~/entities/reports.entity'
 import { GetListReportInputDTO } from '~/modules/report/dto/Get'
 import { IReportRepo } from '~/modules/report/repositories/IReportRepo'
 
@@ -12,14 +11,18 @@ export class ReportRepoImpl implements IReportRepo {
   }
 
   async find(filters: GetListReportInputDTO): Promise<Reports[]> {
-    const whereClause: any = {
-      ...(filters.accountId ? { accounts: { id: filters.accountId } } : {}),
-      ...(filters.type ? { type: filters.type } : {}),
+    // Dùng FindOptionsWhere thay cho `any`: trước đây where được ép any nên khi
+    // entity đổi tên cột (accounts -> reporter, type -> targetType) typecheck
+    // không hề báo, lỗi chỉ lộ ra lúc chạy thật.
+    const whereClause: FindOptionsWhere<Reports> = {
+      ...(filters.accountId ? { reporter: { id: filters.accountId } } : {}),
+      ...(filters.type ? { targetType: filters.type as REPORTTYPE } : {}),
       ...(filters.targetId !== undefined ? { targetId: filters.targetId } : {})
     }
 
     return this.reportRepo.find({
-      where: whereClause
+      where: whereClause,
+      relations: { reporter: true, resolvedBy: true }
     })
   }
 
@@ -28,6 +31,7 @@ export class ReportRepoImpl implements IReportRepo {
     if (!result) return null
     return result
   }
+
   async update(data: Reports): Promise<Reports | null> {
     const result = await this.reportRepo.save(data)
     if (!result) return null

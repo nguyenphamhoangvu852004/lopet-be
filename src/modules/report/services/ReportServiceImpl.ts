@@ -1,3 +1,4 @@
+import { Accounts } from '~/entities/accounts.entity'
 import { Reports } from '~/entities/reports.entity'
 import { BadRequest } from '~/error/error.custom'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
@@ -38,6 +39,11 @@ export class ReportServiceImpl implements IReportService {
     )
     for (const entity of listEntity) {
       entity.action = data.action
+      // Ghi lại staff nào đã xử lý báo cáo — bắt buộc với hành động kiểm duyệt
+      if (data.resolvedBy) {
+        entity.resolvedBy = { id: data.resolvedBy } as Accounts
+        entity.resolvedAt = new Date()
+      }
       const response = await this.reportRepo.update(entity)
       if (!response) throw new BadRequest()
     }
@@ -56,17 +62,17 @@ export class ReportServiceImpl implements IReportService {
     const account = await this.accountRepo.findById(report.accountId)
     if (!account) throw new BadRequest()
     const entity = new Reports({
-      accounts: account,
+      reporter: account,
       reason: report.reason,
-      type: report.type,
+      targetType: report.type,
       targetId: report.targetId
     })
     const result = await this.reportRepo.create(entity)
     if (!result) throw new BadRequest()
     return new CreateReportOutputDTO({
-      accountId: result.accounts.id,
+      accountId: result.reporter.id,
       targetId: result.targetId,
-      type: result.type,
+      type: result.targetType,
       reason: result.reason,
       message: 'Created Success'
     })

@@ -94,8 +94,12 @@ export class AccountController {
   }
   async setRolesToAccount(req: Request, res: Response) {
     const { userId, roles } = req.body
-    console.log(userId, roles)
-    const account = await this.service.setRolesToAccount(userId, roles)
+    // Ghi lại staff nào đã cấp quyền — lấy từ token, không nhận từ body
+    const account = await this.service.setRolesToAccount(
+      userId,
+      roles,
+      Number(req.user.id)
+    )
     sendResponse(
       new ApiResponse({
         data: account,

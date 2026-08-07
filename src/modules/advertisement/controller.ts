@@ -38,7 +38,7 @@ export class AdvertisementController {
     )
   }
   async create(req: Request, res: Response) {
-    const { accountId, title, description, linkRef } = req.body
+    const { title, description, linkRef } = req.body
     const image = req.file as Express.Multer.File
 
     const rs = await cloudinary.uploader.upload(image.path, {
@@ -46,7 +46,8 @@ export class AdvertisementController {
     })
 
     const dto = new CreateAdvertsementInputDTO({
-      accountId: accountId,
+      // Lấy từ token, không nhận từ body — nếu không thì kiểm tra ownership vô nghĩa
+      accountId: Number(req.user.id),
       description: description,
       title: title,
       linkref: linkRef,
@@ -65,7 +66,10 @@ export class AdvertisementController {
   }
   async delete(req: Request, res: Response) {
     const { id } = req.params
-    const response = await this.advertisementService.delet(Number(id))
+    const response = await this.advertisementService.delet(
+      Number(id),
+      Number(req.user.id)
+    )
     sendResponse(
       new ApiResponse({
         res: res,
@@ -76,7 +80,7 @@ export class AdvertisementController {
     )
   }
   async update(req: Request, res: Response) {
-    const { accountId, title, linkRef, description } = req.body
+    const { title, linkRef, description } = req.body
     const { adsId } = req.params
     const image = req.file as Express.Multer.File
 
@@ -86,7 +90,8 @@ export class AdvertisementController {
 
     const dto = new UpdateAdvertsementInputDTO({
       adsId: Number(adsId),
-      accountId: accountId,
+      // Lấy từ token, không nhận từ body
+      accountId: Number(req.user.id),
       description: description,
       title: title,
       linkref: linkRef,

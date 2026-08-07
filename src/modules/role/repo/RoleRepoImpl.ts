@@ -14,7 +14,9 @@ export default class RoleRepoImpl implements IRoleRepo {
     return list
   }
   async createRoles(): Promise<Roles[]> {
-    const listRole = [ROLENAME.ADMIN, ROLENAME.ADS]
+    // Chỉ seed platform role (staff). USER là baseline nên không có bản ghi,
+    // ADS đã chuyển thành capability ở bảng advertiser_profiles.
+    const listRole = Object.values(ROLENAME)
 
     const list: Roles[] = []
     for (const i of listRole) {

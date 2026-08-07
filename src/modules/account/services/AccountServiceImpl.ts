@@ -15,8 +15,16 @@ export class AccountServiceImpl implements IAccountService {
   constructor(private repo: IAccountRepo) {
     this.repo = repo
   }
-  async setRolesToAccount(userId: string, roles: string[]): Promise<Accounts> {
-    const account = await this.repo.setRolesToAccount(Number(userId), roles)
+  async setRolesToAccount(
+    userId: string,
+    roles: string[],
+    grantedBy?: number
+  ): Promise<Accounts> {
+    const account = await this.repo.setRolesToAccount(
+      Number(userId),
+      roles,
+      grantedBy
+    )
     return account
   }
   async getSuggest(id: number, limit: number): Promise<Accounts[]> {
@@ -30,10 +38,11 @@ export class AccountServiceImpl implements IAccountService {
       id: account.id,
       email: account.email,
       username: account.username,
-      password: account.password,
       roles: []
     })
-    for (const role of account.roles) dto.roles.push(role.name)
+    for (const accountRole of account.accountRoles) {
+      dto.roles.push(accountRole.role.name)
+    }
     if (!account.profile) {
       return dto
     }
@@ -56,7 +65,9 @@ export class AccountServiceImpl implements IAccountService {
     const list: Accounts[] = []
 
     for (const account of response) {
-      const isAdmin = account.roles.some((role) => role.name === ROLENAME.ADMIN)
+      const isAdmin = account.accountRoles.some(
+        (accountRole) => accountRole.role.name === ROLENAME.ADMIN
+      )
       if (!isAdmin) {
         list.push(account)
       }
@@ -71,7 +82,6 @@ export class AccountServiceImpl implements IAccountService {
       id: account.id,
       email: account.email,
       username: account.username,
-      password: account.password,
       profile: account.profile || null
     })
     return dto
@@ -84,7 +94,6 @@ export class AccountServiceImpl implements IAccountService {
       id: account.id,
       email: account.email,
       username: account.username,
-      password: account.password,
       profile: account.profile
     })
     return dto
@@ -104,7 +113,6 @@ export class AccountServiceImpl implements IAccountService {
       id: account.id,
       email: account.email,
       username: account.username,
-      password: account.password,
       profile: account.profile
     })
     return dto
@@ -135,7 +143,6 @@ export class AccountServiceImpl implements IAccountService {
       id: enitty.id,
       email: enitty.email,
       username: enitty.username,
-      password: enitty.password,
       profile: enitty.profile
     })
     return dto

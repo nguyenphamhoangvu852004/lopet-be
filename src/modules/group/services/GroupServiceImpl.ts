@@ -1,7 +1,7 @@
-import { logger } from '~/config/logger'
 import { Accounts } from '~/entities/accounts.entity'
+import { GROUPMEMBERROLE } from '~/entities/groupMembers.entity'
 import { Groups } from '~/entities/groups.entity'
-import { BadRequest } from '~/error/error.custom'
+import { BadRequest, Forbidden } from '~/error/error.custom'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import {
   AddMemberInputDTO,
@@ -37,23 +37,39 @@ export default class GroupServiceImpl implements IGroupService {
     this.groupRepo = groupRepo
     this.accountRepo = accountRepo
   }
+
+  /** Chủ group giờ là bản ghi group_members có role = OWNER */
+  private ownerIdOf(group: Groups): number {
+    const owner = group.members?.find(
+      (member) => member.role === GROUPMEMBERROLE.OWNER
+    )
+    return owner?.accountId ?? 0
+  }
+
   async createGroup(data: CreateGroupInputDTO): Promise<CreateGroupOutputDTO> {
     const account = await this.accountRepo.findById(data.owner)
     if (!account) throw new BadRequest()
     const newEntity = new Groups({
       name: data.name,
       type: data.type,
-      owner: account,
       bio: data.bio ?? '',
       coverUrl: data.coverUrl ?? ''
     })
     const response: Groups | null = await this.groupRepo.create(newEntity)
     if (!response) throw new BadRequest()
+
+    // Người tạo trở thành OWNER trong group_members thay vì cột groups.owner cũ
+    await this.groupRepo.addMember(
+      response.id,
+      account.id,
+      GROUPMEMBERROLE.OWNER
+    )
+
     return new CreateGroupOutputDTO({
       id: response.id,
       name: response.name,
       type: response.type,
-      owner: response.owner.id,
+      owner: account.id,
       bio: response.bio,
       coverUrl: response.coverUrl,
       createdAt: response.createdAt
@@ -61,23 +77,29 @@ export default class GroupServiceImpl implements IGroupService {
   }
 
   async addMember(data: AddMemberInputDTO): Promise<AddMemberOutputDTO> {
-    if (!(await this.groupRepo.isOwned(data.groupId, data.owner))) {
-      throw new BadRequest()
+    if (!(await this.groupRepo.canManage(data.groupId, data.owner))) {
+      throw new Forbidden('Bạn không có quyền quản trị nhóm này')
     }
     const invitee: Accounts | null = await this.accountRepo.findById(
       data.invitee
     )
     const group: Groups | null = await this.groupRepo.findById(data.groupId)
-    logger.info(group)
     if (!invitee || !group) throw new BadRequest()
-    group.members.push(invitee)
-    const response: Groups | null = await this.groupRepo.update(group)
-    if (!response) throw new BadRequest()
+
+    const existed = await this.groupRepo.findMember(data.groupId, invitee.id)
+    if (existed) throw new BadRequest('Thành viên đã ở trong nhóm')
+
+    await this.groupRepo.addMember(
+      data.groupId,
+      invitee.id,
+      GROUPMEMBERROLE.MEMBER
+    )
     return new AddMemberOutputDTO({
-      groupId: response.id,
+      groupId: group.id,
       invitee: invitee.id
     })
   }
+
   async getListOwnedGroup(data: number): Promise<GetListOwnedOutputDTO[]> {
     const response: Groups[] = await this.groupRepo.getListOwned(data)
     const listDto: GetListOwnedOutputDTO[] = []
@@ -85,7 +107,7 @@ export default class GroupServiceImpl implements IGroupService {
       const dto = new GetListOwnedOutputDTO({
         id: group.id,
         name: group.name,
-        ownerId: group.owner.id,
+        ownerId: this.ownerIdOf(group),
         type: group.type,
         bio: group.bio,
         coverUrl: group.coverUrl,
@@ -96,6 +118,7 @@ export default class GroupServiceImpl implements IGroupService {
     }
     return listDto
   }
+
   async getListJoinedGroup(data: number): Promise<GetListJoinedOutputDTO[]> {
     const response = await this.groupRepo.getListJoined(data)
     const listDto: GetListJoinedOutputDTO[] = []
@@ -103,7 +126,7 @@ export default class GroupServiceImpl implements IGroupService {
       const dto = new GetListJoinedOutputDTO({
         id: group.id,
         name: group.name,
-        ownerId: group.owner.id,
+        ownerId: this.ownerIdOf(group),
         type: group.type,
         bio: group.bio,
         coverUrl: group.coverUrl,
@@ -122,7 +145,7 @@ export default class GroupServiceImpl implements IGroupService {
       const dto = new GetListJoinedOutputDTO({
         id: group.id,
         name: group.name,
-        ownerId: group.owner.id,
+        ownerId: this.ownerIdOf(group),
         type: group.type,
         bio: group.bio,
         coverUrl: group.coverUrl,
@@ -133,7 +156,11 @@ export default class GroupServiceImpl implements IGroupService {
     }
     return listDto
   }
+
   async modifyGroup(data: ModifyGroupInputDTO): Promise<ModifyGroupOutputDTO> {
+    if (!(await this.groupRepo.canManage(data.id, data.owner))) {
+      throw new Forbidden('Bạn không có quyền quản trị nhóm này')
+    }
     const group: Groups | null = await this.groupRepo.findById(data.id)
     if (!group) throw new BadRequest()
     group.name = data.name ?? group.name
@@ -149,8 +176,9 @@ export default class GroupServiceImpl implements IGroupService {
   }
 
   async deleteGroup(data: DeleteGroupInputDTO): Promise<DeleteGroupOutputDTO> {
+    // Xoá group là hành động huỷ diệt nên yêu cầu đúng OWNER, ADMIN nhóm không đủ
     if (!(await this.groupRepo.isOwned(data.groupId, data.owner))) {
-      throw new BadRequest()
+      throw new Forbidden('Chỉ chủ nhóm mới được xoá nhóm')
     }
     const response = await this.groupRepo.delete(data.groupId)
     if (!response) throw new BadRequest()
@@ -166,20 +194,19 @@ export default class GroupServiceImpl implements IGroupService {
   async removeMember(
     data: RemoveMemberInputDTO
   ): Promise<RemoveMemberOutputDTO> {
-    if (!(await this.groupRepo.isOwned(data.groupId, data.owner))) {
-      throw new BadRequest()
+    if (!(await this.groupRepo.canManage(data.groupId, data.owner))) {
+      throw new Forbidden('Bạn không có quyền quản trị nhóm này')
     }
-    const member = await this.accountRepo.findById(data.member)
-    if (!member) throw new BadRequest()
-    const group = await this.groupRepo.findById(data.groupId)
-    if (!group) throw new BadRequest()
-    group.members = group.members.filter((item) => item.id !== member.id)
-    const response = await this.groupRepo.update(group)
-    if (!response) throw new BadRequest()
+    const target = await this.groupRepo.findMember(data.groupId, data.member)
+    if (!target) throw new BadRequest('Người này không phải thành viên nhóm')
+    if (target.role === GROUPMEMBERROLE.OWNER) {
+      throw new BadRequest('Không thể xoá chủ nhóm khỏi nhóm')
+    }
 
+    await this.groupRepo.removeMember(data.groupId, data.member)
     return new RemoveMemberOutputDTO({
-      groupId: response.id,
-      member: member.id
+      groupId: data.groupId,
+      member: data.member
     })
   }
 }

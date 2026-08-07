@@ -1,6 +1,9 @@
 import { Advertisements } from '~/entities/advertisements.entity'
-import { BadRequest } from '~/error/error.custom'
-import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
+import {
+  ADVERTISERSTATUS,
+  AdvertiserProfiles
+} from '~/entities/advertiserProfiles.entity'
+import { BadRequest, Forbidden, NotFound } from '~/error/error.custom'
 import {
   CreateAdvertsementInputDTO,
   CreateAdvertsementOutputDTO
@@ -16,109 +19,125 @@ import {
 } from '~/modules/advertisement/dto/Update'
 import { IAdvertisementRepositories } from '~/modules/advertisement/repositories/IAdvertisementRepositories'
 import { IAdvertisementService } from '~/modules/advertisement/services/IAdvertisementService'
+import IAdvertiserProfileRepo from '~/modules/advertiser/repositories/IAdvertiserProfileRepo'
 
 export class AdvertisementServiceImpl implements IAdvertisementService {
   constructor(
     private advertisementRepo: IAdvertisementRepositories,
-    private accountRepo: IAccountRepo
+    private advertiserRepo: IAdvertiserProfileRepo
   ) {
     this.advertisementRepo = advertisementRepo
-    this.accountRepo = accountRepo
+    this.advertiserRepo = advertiserRepo
   }
+
+  /**
+   * Tầng CAPABILITY: thay cho câu hỏi cũ "có role ADS không?".
+   * Role không diễn tả được trạng thái duyệt, nên phải hỏi advertiser_profiles.
+   */
+  private async requireApprovedAdvertiser(
+    accountId: number
+  ): Promise<AdvertiserProfiles> {
+    const profile = await this.advertiserRepo.findByAccountId(accountId)
+    if (!profile) {
+      throw new Forbidden('Tài khoản chưa đăng ký hồ sơ nhà quảng cáo')
+    }
+    if (profile.status !== ADVERTISERSTATUS.APPROVED) {
+      throw new Forbidden(
+        `Hồ sơ nhà quảng cáo đang ở trạng thái ${profile.status}`
+      )
+    }
+    return profile
+  }
+
+  /**
+   * OWNERSHIP được kiểm ở middleware requireOwnership trên route, không lặp lại
+   * ở đây. Lý do: middleware cho ADMIN đi qua, còn kiểm tra tại service lại đòi
+   * người thao tác phải có advertiser_profile — admin không có nên sẽ bị chặn
+   * ngược. Đặt ownership ở đúng một chỗ để hai tầng không đá nhau.
+   */
+  private async loadAds(adsId: number): Promise<Advertisements> {
+    const ads = await this.advertisementRepo.findById(adsId)
+    if (!ads) throw new NotFound('Không tìm thấy quảng cáo')
+    return ads
+  }
+
+  private toDetailDto(ads: Advertisements): GetDetailAdvertisementOutputDTO {
+    const author = new Author({
+      id: ads.advertiser.account.id,
+      email: ads.advertiser.account.email,
+      username: ads.advertiser.account.username
+    })
+    return new GetDetailAdvertisementOutputDTO({
+      createdAt: ads.createdAt,
+      updatedAt: ads.updatedAt ?? undefined,
+      deletedAt: ads.deletedAt ?? undefined,
+      description: ads.description,
+      id: ads.id,
+      imageUrl: ads.imageUrl,
+      linkReferfence: ads.linkReference,
+      title: ads.title,
+      author: author
+    })
+  }
+
   async delet(data: number): Promise<DeleteAdvertsementOutputDTO> {
-    const response = await this.advertisementRepo.findById(data)
-    if (!response) throw new BadRequest()
-    const result = await this.advertisementRepo.delete(response)
+    const ads = await this.loadAds(data)
+    const result = await this.advertisementRepo.delete(ads)
     if (!result) throw new BadRequest()
     return new DeleteAdvertsementOutputDTO({ message: 'Delete success' })
   }
+
   async getDetail(data: number): Promise<GetDetailAdvertisementOutputDTO> {
     const response = await this.advertisementRepo.findById(data)
-    if (!response) throw new BadRequest()
-    const author = new Author({
-      email: response.account.email,
-      id: response.account.id,
-      username: response.account.username
-    })
-    const dto = new GetDetailAdvertisementOutputDTO({
-      createdAt: response.createdAt,
-      updatedAt: response.updatedAt ?? undefined,
-      deletedAt: response.deletedAt ?? undefined,
-      description: response.description,
-      id: response.id,
-      imageUrl: response.imageUrl,
-      linkReferfence: response.linkReferfence,
-      title: response.title,
-      author: author
-    })
-    return dto
+    if (!response) throw new NotFound('Không tìm thấy quảng cáo')
+    return this.toDetailDto(response)
   }
-  async getList(accountId): Promise<GetDetailAdvertisementOutputDTO[]> {
+
+  async getList(
+    accountId?: number
+  ): Promise<GetDetailAdvertisementOutputDTO[]> {
     const list = await this.advertisementRepo.findAll(accountId)
-    const response: GetDetailAdvertisementOutputDTO[] = []
-    for (const item of list) {
-      const author = new Author({
-        email: item.account.email,
-        id: item.account.id,
-        username: item.account.username
-      })
-      const dto = new GetDetailAdvertisementOutputDTO({
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt ?? undefined,
-        deletedAt: item.deletedAt ?? undefined,
-        description: item.description,
-        id: item.id,
-        imageUrl: item.imageUrl,
-        linkReferfence: item.linkReferfence,
-        title: item.title,
-        author: author
-      })
-      response.push(dto)
-    }
-    return response
+    return list.map((item) => this.toDetailDto(item))
   }
 
   async create(
     data: CreateAdvertsementInputDTO
   ): Promise<CreateAdvertsementOutputDTO> {
-    const account = await this.accountRepo.findById(data.accountId)
-    if (!account) throw new BadRequest()
+    const profile = await this.requireApprovedAdvertiser(data.accountId)
 
     const entity = new Advertisements({
-      account: account,
+      advertiser: profile,
       createdAt: new Date(),
       description: data.description,
       imageUrl: data.imageurl,
-      linkReferfence: data.linkref,
+      linkReference: data.linkref,
       title: data.title
     })
     const response = await this.advertisementRepo.create(entity)
     if (!response) throw new BadRequest()
 
-    const outDto = new CreateAdvertsementOutputDTO({
+    return new CreateAdvertsementOutputDTO({
       id: response.id
     })
-    return outDto
   }
 
   async update(
     data: UpdateAdvertsementInputDTO
   ): Promise<UpdateAdvertsementOutputDTO> {
-    const ads = await this.advertisementRepo.findById(data.adsId)
-    if (!ads) throw new BadRequest()
-    const account = await this.accountRepo.findById(data.accountId)
-    if (!account) throw new BadRequest()
-    ads.account = account
+    const ads = await this.loadAds(data.adsId)
+
+    // Cố tình KHÔNG gán lại ads.advertiser: đổi chủ sở hữu không phải việc của
+    // luồng update, code cũ cho phép việc này nên có thể chuyển ads sang người khác.
     ads.description = data.description
     ads.imageUrl = data.imageurl
-    ads.linkReferfence = data.linkref
+    ads.linkReference = data.linkref
     ads.title = data.title
     ads.updatedAt = new Date()
+
     const response = await this.advertisementRepo.update(ads)
     if (!response) throw new BadRequest()
-    const outDto = new UpdateAdvertsementOutputDTO({
+    return new UpdateAdvertsementOutputDTO({
       id: response.id
     })
-    return outDto
   }
 }
