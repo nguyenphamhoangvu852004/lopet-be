@@ -37,7 +37,11 @@ export default class ProfileRepoImpl implements IProfileRepo {
     return profiles
   }
   async findById(id: number): Promise<Profiles | null> {
-    const profile: Profiles | null = await this.profileRepo.findOneBy({ id })
+    // Nạp kèm account: tầng ownership cần biết profile này thuộc tài khoản nào
+    const profile: Profiles | null = await this.profileRepo.findOne({
+      where: { id },
+      relations: { account: true }
+    })
     if (!profile) {
       return null
     }
@@ -53,7 +57,13 @@ export default class ProfileRepoImpl implements IProfileRepo {
   }
 
   async update(id: number, data: Profiles): Promise<Profiles | null> {
-    const updateResult = await this.profileRepo.update(id, data)
+    // findById nạp kèm quan hệ `account` để tầng ownership dùng, nhưng
+    // Repository.update() chỉ nhận cột thường — truyền cả quan hệ vào sẽ lỗi
+    // 'Property "account.id" was not found in "Profiles"'.
+    const { account: _account, ...columns } = data
+    void _account
+
+    const updateResult = await this.profileRepo.update(id, columns)
     if (updateResult.affected === 0) {
       return null
     }

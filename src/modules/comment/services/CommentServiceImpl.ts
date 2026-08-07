@@ -35,11 +35,9 @@ export class CommentServiceImpl implements ICommentService {
     // kiếm comment
     const comment = await this.commentRepo.findCommentById(data.commentId)
     if (!comment) throw new BadRequest('No comment found')
-    // kiểm tra quyền xóa
-    const account = await this.accountRepo.findById(data.owner)
-    if (!account) throw new BadRequest('No account found')
-    if (account.id !== comment.account.id)
-      throw new BadRequest('You do not have permission to delete this comment')
+    // Quyền sở hữu đã được middleware requireOwnership kiểm ở tầng route.
+    // Không lặp lại ở đây vì middleware cho staff (post:delete) bỏ qua ownership
+    // để kiểm duyệt, còn kiểm tra tại service lại chặn đúng nhóm đó.
     // xóa comment
     const response = await this.commentRepo.delete(comment.id)
     if (!response) throw new BadRequest('Delete comment failed')

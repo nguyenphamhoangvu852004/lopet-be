@@ -167,11 +167,12 @@ export class ProfileController {
     )
   }
   async setToAccount(req: Request, res: Response) {
-    const { accountId } = req.body
     const { id } = req.params
+    // accountId lấy từ token, không nhận từ body: trước đây client tự khai nên
+    // có thể gắn hồ sơ bất kỳ vào tài khoản của người khác
     const profile = await this.profileService.setToAccount(
       Number(id),
-      accountId
+      Number(req.user.id)
     )
     sendResponse(
       new ApiResponse({
