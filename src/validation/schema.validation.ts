@@ -12,7 +12,9 @@ export const loginValidation = Joi.object({
   password: Joi.string().required().min(6).trim().strict()
 })
 export const resetPasswordValidation = Joi.object({
-  email: Joi.string().required().trim().strict(),
+  // .email() giống registerValidation: chuỗi này được ghép thẳng vào khoá Redis
+  // `email_verified:<email>` và dùng để tra tài khoản, nên không nhận chuỗi tuỳ ý.
+  email: Joi.string().email().required().trim().strict(),
   password: Joi.string().required().min(6).trim().strict(),
   confirmPassword: Joi.string().required().min(6).trim().strict()
 })

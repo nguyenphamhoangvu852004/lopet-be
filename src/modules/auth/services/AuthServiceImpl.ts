@@ -92,12 +92,36 @@ export default class AuthServiceImpl implements IAuthService {
     })
   }
 
+  /**
+   * Đổi mật khẩu qua email — luồng KHÔNG cần đăng nhập, nên bắt buộc phải có
+   * bằng chứng người gọi kiểm soát được hòm thư của tài khoản đó.
+   *
+   * Trước đây bước kiểm tra này bị THIẾU hoàn toàn: endpoint chỉ nhận
+   * { email, password, confirmPassword } và ghi thẳng mật khẩu mới. Bất kỳ ai
+   * biết địa chỉ email đều chiếm được tài khoản tương ứng — kể cả tài khoản
+   * ADMIN được seed sẵn từ INIT_ADMIN_EMAIL.
+   *
+   * Cờ `email_verified:<email>` do luồng OTP đặt (xem EmailServiceImpl.verify),
+   * TTL 5 phút. OTP luôn được gửi tới chính hòm thư của nạn nhân nên kẻ tấn
+   * công không thể tự tạo ra cờ này cho email của người khác.
+   */
   async resetPassword(
     data: ResetPasswordInputDto
   ): Promise<ResetPasswordOutputDto> {
     // Validate: password & confirm
     if (data.password !== data.confirmPassword) {
       throw new BadRequest('Mật khẩu xác nhận không khớp')
+    }
+
+    /**
+     * getDel thay cho cặp get + del: đọc và tiêu thụ cờ trong MỘT lệnh nguyên
+     * tử. Nếu tách làm hai bước thì hai request đổi mật khẩu chạy song song đều
+     * đọc thấy cờ và cùng đi tiếp — một lần xác thực OTP mở ra nhiều lần đổi
+     * mật khẩu. Tiêu thụ TRƯỚC khi ghi để luồng này luôn fail-closed.
+     */
+    const isVerified = await redis.getDel(`email_verified:${data.email}`)
+    if (!isVerified) {
+      throw new Forbidden('Bạn cần xác thực OTP trước khi đổi mật khẩu.')
     }
 
     const account = await this.accountRepo.findByEmail(data.email)
