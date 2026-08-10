@@ -26,6 +26,15 @@ export class Conflict extends HttpError {
   }
 }
 
+export class Unauthorized extends HttpError {
+  constructor(message?: string) {
+    super(
+      httpStatusCode.UNAUTHORIZED,
+      message ?? httpStatusMessage.UNAUTHORIZED
+    )
+  }
+}
+
 export class Forbidden extends HttpError {
   constructor(message?: string) {
     super(httpStatusCode.FORBIDDEN, message ?? httpStatusMessage.FORBIDDEN)

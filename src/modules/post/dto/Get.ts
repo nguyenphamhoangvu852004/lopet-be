@@ -63,6 +63,8 @@ export class GetPostByAccountIdOutputDTO {
 export class GetPostListInputDTO {
   content?: string
   groupId?: number
+  /** Id người xem, lấy từ token. `undefined` = khách chưa đăng nhập. */
+  viewerId?: number
   constructor(data?: Partial<GetPostListInputDTO>) {
     Object.assign(this, data)
   }

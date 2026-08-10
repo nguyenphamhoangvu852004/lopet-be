@@ -40,8 +40,10 @@ export class CommentController {
       accountId: req.user.id,
       content: content,
       imageUrl: imageUrl,
-      // eslint-disable-next-line no-constant-binary-expression
-      replyCommentId: Number(replyCommentId) ?? null,
+      // `Number(undefined) ?? null` cũ luôn ra NaN chứ không bao giờ ra null —
+      // `??` không bắt NaN. Nó chỉ tình cờ chạy đúng vì NaN là falsy ở tầng
+      // dưới; một id rác như "abc" cũng lặng lẽ thành bình luận gốc.
+      replyCommentId: replyCommentId ? Number(replyCommentId) : null,
       postId: postId
     })
     const response = await this.commentService.create(dto)
@@ -58,9 +60,10 @@ export class CommentController {
   }
   async getCommentAllFromPost(req: Request, res: Response) {
     const { postId } = req.params
-    console.log(postId)
+    // Chạy sau optionalAuth nên req.user có thể không có (khách vãng lai)
     const response = await this.commentService.getCommentAllFromPost(
-      Number(postId)
+      Number(postId),
+      req.user?.id
     )
     sendResponse(
       new ApiResponse({

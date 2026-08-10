@@ -30,9 +30,12 @@ export class CommentRepoImpl implements ICommentRepo {
   }
 
   async findCommentById(id: number): Promise<Comments | null> {
+    // Nạp kèm `post`: tầng service phải đối chiếu comment cha thuộc đúng bài
+    // nào trước khi cho trả lời, và quyền xem luôn được quyết theo bài chứ
+    // không theo bản thân comment.
     const response = await this.commentRepo.findOne({
       where: { id },
-      relations: { account: true, replies: true }
+      relations: { account: true, replies: true, post: true }
     })
     if (!response) return null
     return response

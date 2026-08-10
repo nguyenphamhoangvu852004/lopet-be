@@ -1,6 +1,6 @@
 import { PostLikes } from '~/entities/postLikes.entity'
 import { MEDIATYPE, PostMedias } from '~/entities/postMedias.entity'
-import { Posts, POSTSCOPE } from '~/entities/posts.entity'
+import { Posts } from '~/entities/posts.entity'
 import { BadRequest, Forbidden, NotFound } from '~/error/error.custom'
 import IAccountRepo from '~/modules/account/repositories/IAccountRepo'
 import IGroupRepo from '~/modules/group/repositories/IGroupRepo'
@@ -29,6 +29,7 @@ import {
 } from '~/modules/post/dto/Update'
 import IPostRepo from '~/modules/post/repositories/IPostRepo'
 import IPostService from '~/modules/post/services/IPostService'
+import { parseScope, resolveGroupForPost } from '~/modules/post/services/postPolicy'
 import IPostLikeRepo from '~/modules/postLike/repositories/IPostLikeRepo'
 import { IPostMediaRepositories } from '~/modules/postMedia/repositories/IPostMediaRepositories'
 
@@ -56,19 +57,13 @@ export default class PostServiceImpl implements IPostService {
       throw new Forbidden('You are not the owner of this post')
     }
 
-    // 3. Cập nhật nội dung & scope
+    // 3. Cập nhật nội dung & scope.
+    //    Scope hợp lệ được quyết theo group THẬT của bài (post.group đã nạp từ
+    //    DB), không theo groupId client gửi lên — nếu tin body thì chỉ cần bỏ
+    //    trống groupId là đặt được scope FRIEND cho một bài trong nhóm.
+    //    Bài viết không đổi được group, nên đây cũng là group sau khi sửa.
     post.content = data.content
-    switch (data.scope) {
-      case 'PUBLIC':
-        post.postScope = POSTSCOPE.PUBLIC
-        break
-      case 'FRIEND':
-        post.postScope = POSTSCOPE.FRIEND
-        break
-      case 'PRIVATE':
-        post.postScope = POSTSCOPE.PRIVATE
-        break
-    }
+    post.postScope = parseScope(data.scope, post.group != null)
 
     const updatedPost = await this.postRepo.update(post)
     if (!updatedPost) throw new BadRequest('Update failed')
@@ -124,8 +119,8 @@ export default class PostServiceImpl implements IPostService {
     })
   }
 
-  async getSuggestList(): Promise<GetPostOutputDTO[]> {
-    const listEntity = await this.postRepo.getSuggestList()
+  async getSuggestList(viewerId?: number): Promise<GetPostOutputDTO[]> {
+    const listEntity = await this.postRepo.getSuggestList(viewerId)
     if (!listEntity) throw new NotFound()
     const listOutDto: GetPostOutputDTO[] = []
     for (const item of listEntity) {
@@ -157,8 +152,11 @@ export default class PostServiceImpl implements IPostService {
     }
     return listOutDto
   }
-  async getByAccountId(id: number): Promise<GetPostByAccountIdOutputDTO[]> {
-    const listEntity = await this.postRepo.getByAccountId(id)
+  async getByAccountId(
+    id: number,
+    viewerId?: number
+  ): Promise<GetPostByAccountIdOutputDTO[]> {
+    const listEntity = await this.postRepo.getByAccountId(id, viewerId)
 
     if (!listEntity) throw new NotFound()
     const listOutDto: GetPostByAccountIdOutputDTO[] = []
@@ -234,9 +232,16 @@ export default class PostServiceImpl implements IPostService {
     return listOutDto
   }
 
-  async getOneById(id): Promise<GetPostDetailOutputDTO> {
-    const response: Posts | null = await this.postRepo.getOne(id)
-    console.log(response)
+  /**
+   * Trả về NotFound (không phải Forbidden) khi người xem không đủ quyền: phản
+   * hồi phải giống hệt trường hợp bài không tồn tại, nếu không endpoint này trở
+   * thành công cụ dò xem một bài PRIVATE có tồn tại hay không.
+   */
+  async getOneById(id, viewerId?: number): Promise<GetPostDetailOutputDTO> {
+    const response: Posts | null = await this.postRepo.getOneVisibleTo(
+      Number(id),
+      viewerId
+    )
     if (!response) throw new NotFound()
     const dto = new GetPostDetailOutputDTO({
       accountId: response.accounts.id,
@@ -253,8 +258,8 @@ export default class PostServiceImpl implements IPostService {
     if (!dto.postMedias) {
       dto.postMedias = []
     }
-    const account = await this.accountRepo.findById(response.accounts.id)
-    if (!account) throw new BadRequest()
+    // Bỏ lượt truy vấn accountRepo.findById ở đây: kết quả không được dùng vào
+    // đâu cả, tác giả đã nằm sẵn trong response.accounts nhờ join.
     for (const item of response.postLikes) {
       const accountDto = new AccountDTO({
         id: item.account.id,
@@ -280,32 +285,22 @@ export default class PostServiceImpl implements IPostService {
     const account = await this.accountRepo.findById(data.accountId)
     if (!account) throw new BadRequest()
 
-    // tìm group nếu có gữi lên group
+    // Đăng vào group thì phải được group đó cho phép — xem resolveGroupForPost.
+    // Kiểm tra nằm ở đây chứ không ở route: route chỉ biết groupId trong body,
+    // còn quyết định lại phụ thuộc group.type và tư cách thành viên.
+    const group = data.groupId
+      ? await resolveGroupForPost(this.groupRepo, data.groupId, account.id)
+      : null
 
     const newPostEntity: Posts = new Posts({
       accounts: account,
-      content: data.content
+      content: data.content,
+      group
     })
-
-    if (data.groupId) {
-      const group = await this.groupRepo.findById(data.groupId)
-      if (!group) {
-        newPostEntity.group = null
-      } else {
-        newPostEntity.group = group
-      }
-    }
     newPostEntity.setType()
 
-    if (data.scope == 'PUBLIC') {
-      newPostEntity.postScope = POSTSCOPE.PUBLIC
-    }
-    if (data.scope == 'FRIEND') {
-      newPostEntity.postScope = POSTSCOPE.FRIEND
-    }
-    if (data.scope == 'PRIVATE') {
-      newPostEntity.postScope = POSTSCOPE.PRIVATE
-    }
+    // Suy ra từ group đã nạp thật, không từ data.groupId
+    newPostEntity.postScope = parseScope(data.scope, group !== null)
 
     const response: Posts | null = await this.postRepo.create(newPostEntity)
 
@@ -355,7 +350,13 @@ export default class PostServiceImpl implements IPostService {
   }
 
   async like(data: LikePostInputDTO): Promise<LikePostOuputDTO> {
-    const post = await this.postRepo.getOne(data.postId)
+    // Bài mình không có quyền xem thì cũng không thả tim được. Nếu nạp bằng
+    // getOne() không lọc thì endpoint này thành công cụ dò: phản hồi khác nhau
+    // giữa "bài không tồn tại" và "bài PRIVATE của người khác".
+    const post = await this.postRepo.getOneVisibleTo(
+      data.postId,
+      data.accountId
+    )
     if (!post) throw new BadRequest()
 
     const account = await this.accountRepo.findById(data.accountId)
@@ -385,7 +386,10 @@ export default class PostServiceImpl implements IPostService {
   }
 
   async unLike(data: UnlikePostInputDTO): Promise<UnlikePostOutputDTO> {
-    const post = await this.postRepo.getOne(data.postId)
+    const post = await this.postRepo.getOneVisibleTo(
+      data.postId,
+      data.accountId
+    )
     if (!post) throw new BadRequest()
 
     const account = await this.accountRepo.findById(data.accountId)

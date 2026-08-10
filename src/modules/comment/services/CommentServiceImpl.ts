@@ -45,9 +45,18 @@ export class CommentServiceImpl implements ICommentService {
       commentId: response.id
     })
   }
-  async getCommentAllFromPost(data: number): Promise<GetCommentOutputDTO> {
-    // kiếm bài post
-    const post = await this.postRepo.getOne(data)
+  /**
+   * Bình luận thừa hưởng quyền riêng tư của bài viết chứa nó. Trước đây hàm này
+   * nạp bài bằng getOne() không lọc, còn route thì không có xác thực — nên danh
+   * sách bình luận (kèm username/email người bình luận) của một bài PRIVATE vẫn
+   * đọc được bởi khách vãng lai, dù thân bài đã được che.
+   */
+  async getCommentAllFromPost(
+    data: number,
+    viewerId?: number
+  ): Promise<GetCommentOutputDTO> {
+    // kiếm bài post — bản có lọc quyền xem
+    const post = await this.postRepo.getOneVisibleTo(data, viewerId)
     if (!post) throw new BadRequest('No post found')
     // kiếm tất cả các comment trong bài post
     const comments = await this.commentRepo.getCommentAllFromPost(post.id)
@@ -90,7 +99,11 @@ export class CommentServiceImpl implements ICommentService {
   async create(data: CreateCommentInputDTO): Promise<CreateCommentOutputDTO> {
     const account = await this.accountRepo.findById(data.accountId)
     if (!account) throw new BadRequest('No account found')
-    const post = await this.postRepo.getOne(data.postId)
+    // Không bình luận được vào bài mà mình không có quyền xem
+    const post = await this.postRepo.getOneVisibleTo(
+      data.postId,
+      data.accountId
+    )
     if (!post) throw new BadRequest('No post found')
     let parent
     if (data.replyCommentId) {
@@ -98,6 +111,14 @@ export class CommentServiceImpl implements ICommentService {
         data.replyCommentId
       )
       if (!comment) throw new BadRequest('No comment found')
+      // Comment cha PHẢI thuộc đúng bài vừa được kiểm quyền ở trên. Nếu không
+      // đối chiếu, chỉ cần ghép postId của một bài mình xem được với
+      // replyCommentId lấy từ bài PRIVATE của người khác là tạo được reply gắn
+      // vào cây bình luận đó — quyền xem đã kiểm trên bài này nhưng comment cha
+      // lại nằm ở bài kia, tức là kiểm nhầm tài nguyên.
+      if (comment.post?.id !== post.id) {
+        throw new BadRequest('No comment found')
+      }
       parent = comment
     }
 

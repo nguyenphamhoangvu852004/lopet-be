@@ -4,6 +4,10 @@ import { GetCommentOutputDTO } from '~/modules/comment/dto/Get'
 
 export interface ICommentService {
   create(data: CreateCommentInputDTO): Promise<CreateCommentOutputDTO>
-  getCommentAllFromPost(data: number): Promise<GetCommentOutputDTO>
+  /** `viewerId` từ optionalAuth; undefined = khách. Lọc theo quyền xem bài. */
+  getCommentAllFromPost(
+    data: number,
+    viewerId?: number
+  ): Promise<GetCommentOutputDTO>
   delete(data: DeleteCommentInputDTO): Promise<DeleteCommentOutputDTO>
 }
